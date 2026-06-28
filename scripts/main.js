@@ -51,6 +51,14 @@
       key: "jump",
       names: ["jump", "saut"]
     },
+    hex: {
+      key: "hex",
+      names: ["hex", "maléfice", "malefice"]
+    },
+    huntersMark: {
+      key: "huntersMark",
+      names: ["hunter's mark", "hunters mark", "marque du chasseur", "hunter’s mark"]
+    },
     sanctuary: {
       key: "sanctuary",
       names: ["sanctuary", "sanctuaire", "sanctuary / sanctuaire", "sanctuaire / sanctuary"]
@@ -1669,6 +1677,318 @@
   }
 
 
+
+  function getAsharaActorIdentity(actor) {
+    if (!actor) return null;
+
+    return {
+      uuid: actor.uuid || "",
+      id: actor.id || "",
+      name: actor.name || ""
+    };
+  }
+
+  function asharaSameActorIdentity(actor, identity = {}) {
+    if (!actor) return false;
+
+    if (identity.uuid && actor.uuid && identity.uuid === actor.uuid) return true;
+    if (identity.id && actor.id && identity.id === actor.id) return true;
+    if (identity.name && actor.name && identity.name === actor.name) return true;
+
+    return false;
+  }
+
+  function getHuntersMarkDurationSeconds(spellLevel) {
+    const level = Number(spellLevel || 1);
+
+    if (level >= 5) return 24 * 60 * 60;
+    if (level >= 3) return 8 * 60 * 60;
+
+    return 60 * 60;
+  }
+
+  function getHuntersMarkDurationLabel(spellLevel) {
+    const level = Number(spellLevel || 1);
+
+    if (level >= 5) return "24 heures";
+    if (level >= 3) return "8 heures";
+
+    return "1 heure";
+  }
+
+  async function askHexAbility() {
+    return new Promise(resolve => {
+      new Dialog({
+        title: "Hex / Maléfice - Ashara",
+        content: `
+          <form>
+            <div class="form-group">
+              <label>Caractéristique désavantagée pour les tests</label>
+              <select id="ashara-hex-ability">
+                <option value="str">Force</option>
+                <option value="dex">Dextérité</option>
+                <option value="con">Constitution</option>
+                <option value="int">Intelligence</option>
+                <option value="wis">Sagesse</option>
+                <option value="cha">Charisme</option>
+              </select>
+            </div>
+          </form>
+        `,
+        buttons: {
+          ok: {
+            label: "Appliquer Hex",
+            callback: html => resolve(String(html.find("#ashara-hex-ability").val() || "str"))
+          },
+          cancel: {
+            label: "Annuler",
+            callback: () => resolve(null)
+          }
+        },
+        default: "ok",
+        close: () => resolve(null)
+      }).render(true);
+    });
+  }
+
+  function getAbilityLabel(ability) {
+    const labels = {
+      str: "Force",
+      dex: "Dextérité",
+      con: "Constitution",
+      int: "Intelligence",
+      wis: "Sagesse",
+      cha: "Charisme"
+    };
+
+    return labels[ability] || ability || "caractéristique";
+  }
+
+  async function removeHex(actor, reason = "manual") {
+    const data = actor.getFlag(MODULE_ID, "hex");
+    if (!data) return false;
+
+    await actor.unsetFlag(MODULE_ID, "hex");
+
+    log("Hex retiré", {
+      actor: actor.name,
+      reason
+    });
+
+    return true;
+  }
+
+  async function removeHuntersMark(actor, reason = "manual") {
+    const data = actor.getFlag(MODULE_ID, "huntersMark");
+    if (!data) return false;
+
+    await actor.unsetFlag(MODULE_ID, "huntersMark");
+
+    log("Hunter's Mark retiré", {
+      actor: actor.name,
+      reason
+    });
+
+    return true;
+  }
+
+  async function applyHex(targetActor, item) {
+    const key = "hex";
+    const caster = item?.actor || item?.parent;
+    const durationSeconds = 60 * 60;
+    const ability = await askHexAbility();
+
+    if (!ability) return false;
+
+    await deleteAsharaEffect(targetActor, key);
+
+    const casterIdentity = getAsharaActorIdentity(caster);
+
+    await targetActor.setFlag(MODULE_ID, "hex", {
+      caster: casterIdentity,
+      ability,
+      damageDie: "1d6",
+      damageType: "necrotic",
+      appliedAt: Date.now()
+    });
+
+    await createMarkerEffect(targetActor, {
+      key,
+      name: `Hex - Ashara (${getAbilityLabel(ability)})`,
+      icon: "icons/magic/unholy/strike-hand-glow-pink.webp",
+      durationSeconds,
+      data: {
+        spell: "hex",
+        caster: casterIdentity,
+        ability,
+        damageDie: "1d6",
+        damageType: "necrotic"
+      }
+    });
+
+    log("Hex appliqué", {
+      caster: caster?.name,
+      target: targetActor.name,
+      ability
+    });
+
+    return true;
+  }
+
+  async function applyHuntersMark(targetActor, item, spellLevel = 1) {
+    const key = "huntersMark";
+    const caster = item?.actor || item?.parent;
+    const durationSeconds = getHuntersMarkDurationSeconds(spellLevel);
+    const casterIdentity = getAsharaActorIdentity(caster);
+
+    await deleteAsharaEffect(targetActor, key);
+
+    await targetActor.setFlag(MODULE_ID, "huntersMark", {
+      caster: casterIdentity,
+      spellLevel,
+      damageDie: "1d6",
+      damageType: "force",
+      appliedAt: Date.now()
+    });
+
+    await createMarkerEffect(targetActor, {
+      key,
+      name: `Hunter's Mark - Ashara Niv ${spellLevel}`,
+      icon: "icons/skills/ranged/target-bullseye-arrow-blue.webp",
+      durationSeconds,
+      data: {
+        spell: "huntersMark",
+        caster: casterIdentity,
+        spellLevel,
+        damageDie: "1d6",
+        damageType: "force"
+      }
+    });
+
+    log("Hunter's Mark appliqué", {
+      caster: caster?.name,
+      target: targetActor.name,
+      spellLevel,
+      durationSeconds
+    });
+
+    return true;
+  }
+
+  function getAsharaDamageTargets(workflow) {
+    const result = [];
+
+    function collect(set) {
+      if (!set) return;
+
+      for (const entry of Array.from(set)) {
+        if (entry?.actor) result.push(entry);
+        else if (entry?.document?.actor) result.push(entry.document);
+        else if (entry?.token?.actor) result.push(entry.token);
+      }
+    }
+
+    collect(workflow?.hitTargets);
+    collect(workflow?.hitTargetsEC);
+    collect(workflow?.targets);
+
+    return [...new Set(result)];
+  }
+
+  function asharaIsAttackDamageWorkflow(workflow) {
+    if (!workflow) return false;
+
+    const item = workflow.item;
+    const activity = workflow.activity;
+
+    const actionType = asharaNormalizeText(
+      item?.system?.actionType ||
+      activity?.actionType ||
+      activity?.attack?.type ||
+      activity?.type ||
+      ""
+    );
+
+    if (workflow.attackRoll) return true;
+    if (workflow.isAttack) return true;
+
+    if (["mwak", "rwak", "msak", "rsak"].includes(actionType)) return true;
+    if (actionType.includes("attack")) return true;
+    if (actionType.includes("attaque")) return true;
+
+    return false;
+  }
+
+  function getAsharaMarkData(targetActor, key, attacker) {
+    if (!targetActor || !attacker) return null;
+
+    const flag = targetActor.getFlag?.(MODULE_ID, key);
+    if (!flag) return null;
+
+    const effect = targetActor.effects?.find(e => e.getFlag(MODULE_ID, "key") === key);
+    if (!effect) return null;
+    if (effect.disabled) return null;
+
+    const caster = flag.caster || effect.getFlag?.(MODULE_ID, "caster") || {};
+
+    if (!asharaSameActorIdentity(attacker, caster)) return null;
+
+    return flag;
+  }
+
+  function asharaHexHuntersMarkDamageBonus(workflow) {
+    try {
+      if (!asharaIsAttackDamageWorkflow(workflow)) return null;
+
+      const attacker = workflow.actor;
+      if (!attacker) return null;
+
+      const targets = getAsharaDamageTargets(workflow);
+      if (!targets.length) return null;
+
+      const damageParts = [];
+      const flavorParts = [];
+
+      for (const target of targets) {
+        const targetActor = target?.actor;
+        if (!targetActor) continue;
+
+        const hex = getAsharaMarkData(targetActor, "hex", attacker);
+        if (hex) {
+          damageParts.push("1d6[necrotic]");
+          flavorParts.push(`Hex sur ${targetActor.name}`);
+        }
+
+        const huntersMark = getAsharaMarkData(targetActor, "huntersMark", attacker);
+        if (huntersMark) {
+          damageParts.push("1d6[force]");
+          flavorParts.push(`Hunter's Mark sur ${targetActor.name}`);
+        }
+      }
+
+      if (!damageParts.length) return null;
+
+      const damageRoll = damageParts.join(" + ");
+      const flavor = `<b>Ashara Automations</b><br>${flavorParts.join("<br>")}`;
+
+      log("Hex/Hunter's Mark : bonus de dégâts ajouté", {
+        attacker: attacker.name,
+        targets: targets.map(t => t.actor?.name),
+        damageRoll,
+        flavorParts
+      });
+
+      return {
+        damageRoll,
+        flavor
+      };
+    } catch (err) {
+      error("Erreur Hex/Hunter's Mark DamageBonus :", err);
+      return null;
+    }
+  }
+
+
   async function runAutomationForItem(item) {
     if (!item?.name) return false;
 
@@ -1917,6 +2237,54 @@
       return true;
     }
 
+    if (spellKey === "hex") {
+      const targets = getTargetActorsForItem(item, { requireExplicitTarget: true });
+
+      if (!targets.length) {
+        ui.notifications.warn("Ashara Automations : cible une créature pour Hex.");
+        return false;
+      }
+
+      for (const actor of targets) {
+        await applyHex(actor, item);
+      }
+
+      const flagText = targets.map(a => {
+        const ability = a.getFlag(MODULE_ID, "hex")?.ability;
+        return `${a.name} (${getAbilityLabel(ability)})`;
+      }).join(", ");
+
+      ChatMessage.create({
+        content: `<b>Hex / Maléfice - Ashara</b><br>${flagText} reçoit Hex pendant 1 heure.<br>Quand le lanceur touche la cible avec une attaque : <b>+1d6 dégâts nécrotiques</b>.<br>Rappel : la cible a désavantage aux tests de la caractéristique choisie.`
+      });
+
+      ui.notifications.info(`Ashara Automations : Hex appliqué à ${targets.length} cible(s).`);
+      return true;
+    }
+
+    if (spellKey === "huntersMark") {
+      const targets = getTargetActorsForItem(item, { requireExplicitTarget: true });
+
+      if (!targets.length) {
+        ui.notifications.warn("Ashara Automations : cible une créature pour Hunter's Mark.");
+        return false;
+      }
+
+      const spellLevel = await askSpellLevel("Hunter's Mark / Marque du chasseur - Ashara", 1, 9);
+      if (!spellLevel) return false;
+
+      for (const actor of targets) {
+        await applyHuntersMark(actor, item, spellLevel);
+      }
+
+      ChatMessage.create({
+        content: `<b>Hunter's Mark / Marque du chasseur - Ashara</b><br>${targets.map(a => a.name).join(", ")} reçoit Hunter's Mark pendant ${getHuntersMarkDurationLabel(spellLevel)}.<br>Quand le lanceur touche la cible avec une attaque : <b>+1d6 dégâts de force</b>.`
+      });
+
+      ui.notifications.info(`Ashara Automations : Hunter's Mark appliqué à ${targets.length} cible(s).`);
+      return true;
+    }
+
     if (spellKey === "sanctuary") {
       log("Sanctuary détecté via runAutomationForItem", {
         item: item.name,
@@ -2038,6 +2406,8 @@
     if (key === "protectionEvilGood") await removeProtectionEvilGood(actor, "effect-delete");
     if (key === "expeditiousRetreat") await removeExpeditiousRetreat(actor, "effect-delete");
     if (key === "jump") await removeJump(actor, "effect-delete");
+    if (key === "hex") await removeHex(actor, "effect-delete");
+    if (key === "huntersMark") await removeHuntersMark(actor, "effect-delete");
     if (key === "sanctuary") await removeSanctuary(actor, "effect-delete");
   });
 
@@ -2060,6 +2430,8 @@
     if (key === "protectionEvilGood") await removeProtectionEvilGood(actor, "effect-disabled");
     if (key === "expeditiousRetreat") await removeExpeditiousRetreat(actor, "effect-disabled");
     if (key === "jump") await removeJump(actor, "effect-disabled");
+    if (key === "hex") await removeHex(actor, "effect-disabled");
+    if (key === "huntersMark") await removeHuntersMark(actor, "effect-disabled");
     if (key === "sanctuary") await removeSanctuary(actor, "effect-disabled");
   });
 
@@ -2314,7 +2686,7 @@
     refreshControlledItemUuids();
 
     window.ASHARA_AUTOMATIONS = {
-      version: "0.4.2",
+      version: "0.4.3",
       applyAid,
       removeAid,
       applyLongstrider,
@@ -2334,6 +2706,10 @@
       applyProtectionEvilGood,
       applySanctuary,
       applySanctuaryToSelected,
+      applyHex,
+      removeHex,
+      applyHuntersMark,
+      removeHuntersMark,
       removeProtectionEvilGood,
       runAutomationForItem,
       refreshControlledItemUuids
@@ -2448,6 +2824,14 @@
     });
 
     log("Sanctuary : sauvegarde automatique activée.");
+
+    Hooks.on("midi-qol.DamageBonus", workflow => {
+      return asharaHexHuntersMarkDamageBonus(workflow);
+    });
+
+    log("Hex/Hunter's Mark : bonus de dégâts Midi-QOL activé.");
+
+
 
     log("Hooks D&D5e/Midi activés pour les sorts contrôlés.");
     log("Module prêt.", window.ASHARA_AUTOMATIONS);
