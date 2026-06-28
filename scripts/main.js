@@ -2880,11 +2880,11 @@ async function removeHex(actor, reason = "manual") {
     }
 
     if (isEffectFromControlledItem(effect)) {
-    log("Effet DAE autorisé pour affichage sur la fiche :", {
+    log("Effet DAE bloqué pour un sort contrôlé par Ashara :", {
       effect: effect.name || effect.label,
       origin: effect.origin
     });
-    return true;
+    return false;
   }
 
     return true;
