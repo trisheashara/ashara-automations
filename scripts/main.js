@@ -1301,9 +1301,36 @@
       }
     });
 
+    const matchingTokens = Array.from(canvas?.tokens?.placeables || []).filter(token => {
+      if (!token?.actor) return false;
+      if (token.actor === actor) return true;
+      if (token.actor?.uuid && actor?.uuid && token.actor.uuid === actor.uuid) return true;
+      if (token.actor?.id && actor?.id && token.actor.id === actor.id) return true;
+      return token.actor?.name === actor?.name;
+    });
+
+    for (const token of matchingTokens) {
+      try {
+        await token.document.setFlag(MODULE_ID, "sanctuary", {
+          saveDc,
+          actorUuid: actor.uuid,
+          actorId: actor.id,
+          actorName: actor.name,
+          appliedAt: Date.now()
+        });
+      } catch (err) {
+        log("Sanctuary : impossible de poser le flag sur le token", {
+          token: token.name,
+          actor: actor.name,
+          err
+        });
+      }
+    }
+
     log("Sanctuary appliqué", {
       actor: actor.name,
-      saveDc
+      saveDc,
+      tokens: matchingTokens.map(t => t.name)
     });
 
     return true;
@@ -1312,30 +1339,61 @@
   function hasSanctuary(actor) {
     if (!actor) return false;
 
-    const flag = actor.getFlag(MODULE_ID, "sanctuary");
+    const flag = actor.getFlag?.(MODULE_ID, "sanctuary");
     if (!flag) return false;
 
     const effect = actor.effects?.find(e => e.getFlag(MODULE_ID, "key") === "sanctuary");
-    if (!effect) return false;
-    if (effect.disabled) return false;
+
+    if (effect && effect.disabled) return false;
 
     return true;
   }
 
-  function getSanctuarySaveDc(actor) {
-    return Number(actor?.getFlag?.(MODULE_ID, "sanctuary")?.saveDc || 10);
+  function getSanctuarySaveDc(actor, tokenOrDocument = null) {
+    const actorDc = Number(actor?.getFlag?.(MODULE_ID, "sanctuary")?.saveDc || 0);
+    if (Number.isFinite(actorDc) && actorDc > 0) return actorDc;
+
+    const tokenDc = Number(tokenOrDocument?.getFlag?.(MODULE_ID, "sanctuary")?.saveDc || 0);
+    if (Number.isFinite(tokenDc) && tokenDc > 0) return tokenDc;
+
+    const documentDc = Number(tokenOrDocument?.document?.getFlag?.(MODULE_ID, "sanctuary")?.saveDc || 0);
+    if (Number.isFinite(documentDc) && documentDc > 0) return documentDc;
+
+    return 10;
   }
 
   function getSanctuaryWorkflowTargets(workflow) {
     const result = [];
 
+    function normalize(entry) {
+      if (!entry) return null;
+
+      const token = entry.object || entry.token || entry;
+      const document = entry.document || entry;
+      const actor =
+        entry.actor ||
+        entry.document?.actor ||
+        entry.object?.actor ||
+        entry.token?.actor ||
+        null;
+
+      if (!actor) return null;
+
+      return {
+        raw: entry,
+        token,
+        document,
+        actor,
+        name: entry.name || token?.name || document?.name || actor.name || "Cible"
+      };
+    }
+
     function collect(set) {
       if (!set) return;
 
       for (const entry of Array.from(set)) {
-        if (entry?.actor) result.push(entry);
-        else if (entry?.document?.actor) result.push(entry.document);
-        else if (entry?.token?.actor) result.push(entry.token);
+        const target = normalize(entry);
+        if (target) result.push(target);
       }
     }
 
@@ -1344,7 +1402,20 @@
     collect(workflow?.hitTargetsEC);
     collect(game.user?.targets);
 
-    return [...new Set(result)];
+    const byKey = new Map();
+
+    for (const target of result) {
+      const key =
+        target.token?.id ||
+        target.document?.id ||
+        target.actor?.uuid ||
+        target.actor?.id ||
+        target.name;
+
+      if (!byKey.has(key)) byKey.set(key, target);
+    }
+
+    return Array.from(byKey.values());
   }
 
   function isSanctuaryAttackWorkflow(workflow) {
@@ -1447,6 +1518,43 @@
     }
   }
 
+  async function askSanctuaryDecision(attacker, target, dc) {
+    const attackerName = attacker?.name || "La créature";
+    const targetName = target?.name || target?.actor?.name || "la cible";
+
+    return new Promise(resolve => {
+      new Dialog({
+        title: "Sanctuary / Sanctuaire - Ashara",
+        content: `
+          <div>
+            <p><b>${attackerName}</b> tente d'attaquer <b>${targetName}</b>, qui est sous <b>Sanctuary</b>.</p>
+            <p>DD de sauvegarde de Sagesse : <b>${dc}</b></p>
+            <p>Que veux-tu faire ?</p>
+          </div>
+        `,
+        buttons: {
+          roll: {
+            icon: '<i class="fas fa-dice-d20"></i>',
+            label: "Lancer le jet de Sagesse",
+            callback: () => resolve("roll")
+          },
+          allow: {
+            icon: '<i class="fas fa-check"></i>',
+            label: "Autoriser l'attaque",
+            callback: () => resolve("allow")
+          },
+          block: {
+            icon: '<i class="fas fa-ban"></i>',
+            label: "Bloquer l'attaque",
+            callback: () => resolve("block")
+          }
+        },
+        default: "roll",
+        close: () => resolve("roll")
+      }).render(true);
+    });
+  }
+
   async function sanctuaryReminder(workflow, source = "unknown") {
     if (!isSanctuaryAttackWorkflow(workflow)) return true;
 
@@ -1460,24 +1568,73 @@
     if (!attacker) return true;
 
     const targets = getSanctuaryWorkflowTargets(workflow);
-    const sanctuaryTargets = targets.filter(t => hasSanctuary(t.actor));
+
+    const sanctuaryTargets = targets.filter(target => {
+      const actorHas = hasSanctuary(target.actor);
+      const tokenFlag = !!target.token?.document?.getFlag?.(MODULE_ID, "sanctuary");
+      const documentFlag = !!target.document?.getFlag?.(MODULE_ID, "sanctuary");
+
+      return actorHas || tokenFlag || documentFlag;
+    });
 
     if (!sanctuaryTargets.length) {
       log("Sanctuary ignoré : aucune cible protégée détectée", {
         source,
         attacker: attacker.name,
-        targets: targets.map(t => t.name)
+        targets: targets.map(t => ({
+          name: t.name,
+          actor: t.actor?.name,
+          actorFlag: !!t.actor?.getFlag?.(MODULE_ID, "sanctuary"),
+          tokenFlag: !!t.token?.document?.getFlag?.(MODULE_ID, "sanctuary"),
+          documentFlag: !!t.document?.getFlag?.(MODULE_ID, "sanctuary")
+        }))
       });
       return true;
     }
 
     for (const target of sanctuaryTargets) {
-      const dc = getSanctuarySaveDc(target.actor);
+      const dc = getSanctuarySaveDc(target.actor, target.token?.document || target.document);
+      const decision = await askSanctuaryDecision(attacker, target, dc);
+
+      if (decision === "allow") {
+        ChatMessage.create({
+          content: `<b>Sanctuary / Sanctuaire - Ashara</b><br>Le MJ autorise l'attaque de ${attacker.name} contre ${target.name}.`
+        });
+
+        log("Sanctuary : attaque autorisée manuellement", {
+          source,
+          attacker: attacker.name,
+          target: target.name,
+          saveDc: dc
+        });
+
+        continue;
+      }
+
+      if (decision === "block") {
+        tryAbortSanctuaryWorkflow(workflow);
+
+        ChatMessage.create({
+          content: `<b>Sanctuary / Sanctuaire - Ashara</b><br>Le MJ bloque l'attaque de ${attacker.name} contre ${target.name}.`
+        });
+
+        ui.notifications.warn(`Sanctuary Ashara : attaque de ${attacker.name} bloquée.`);
+
+        log("Sanctuary : attaque bloquée manuellement", {
+          source,
+          attacker: attacker.name,
+          target: target.name,
+          saveDc: dc
+        });
+
+        return false;
+      }
+
       const result = await rollSanctuaryWisdomSave(attacker, dc, target.name);
 
       if (result.success) {
         ChatMessage.create({
-          content: `<b>Sanctuary / Sanctuaire - Ashara</b><br>${attacker.name} réussit sa sauvegarde de Sagesse contre DD ${dc} avec <b>${result.total}</b>.<br>L’attaque contre ${target.name} peut continuer.`
+          content: `<b>Sanctuary / Sanctuaire - Ashara</b><br>${attacker.name} réussit sa sauvegarde de Sagesse contre DD ${dc} avec <b>${result.total}</b>.<br>L'attaque contre ${target.name} peut continuer.`
         });
 
         log("Sanctuary sauvegarde réussie", {
@@ -1491,10 +1648,10 @@
         tryAbortSanctuaryWorkflow(workflow);
 
         ChatMessage.create({
-          content: `<b>Sanctuary / Sanctuaire - Ashara</b><br>${attacker.name} rate sa sauvegarde de Sagesse contre DD ${dc} avec <b>${result.total}</b>.<br><b>L’attaque contre ${target.name} doit être annulée ou redirigée vers une autre cible.</b>`
+          content: `<b>Sanctuary / Sanctuaire - Ashara</b><br>${attacker.name} rate sa sauvegarde de Sagesse contre DD ${dc} avec <b>${result.total}</b>.<br><b>L'attaque contre ${target.name} doit être annulée ou redirigée vers une autre cible.</b>`
         });
 
-        ui.notifications.warn(`Sanctuary Ashara : ${attacker.name} rate sa sauvegarde, l’attaque doit être annulée ou redirigée.`);
+        ui.notifications.warn(`Sanctuary Ashara : ${attacker.name} rate sa sauvegarde, l'attaque doit être annulée ou redirigée.`);
 
         log("Sanctuary sauvegarde ratée : attaque bloquée si possible", {
           source,
@@ -2157,7 +2314,7 @@
     refreshControlledItemUuids();
 
     window.ASHARA_AUTOMATIONS = {
-      version: "0.4.1",
+      version: "0.4.2",
       applyAid,
       removeAid,
       applyLongstrider,
