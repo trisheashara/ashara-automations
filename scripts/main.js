@@ -2416,7 +2416,6 @@
           {
             flavor: `${label} - Ashara`,
             itemCardUuid: workflow?.itemCardUuid,
-            itemCardId: workflow?.itemCardId,
             asharaBonusDamage: true,
             workflowOptions: {
               asharaBonusDamage: true
@@ -2889,7 +2888,7 @@
     refreshControlledItemUuids();
 
     window.ASHARA_AUTOMATIONS = {
-      version: "0.4.5",
+      version: "0.4.6",
       applyAid,
       removeAid,
       applyLongstrider,

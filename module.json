@@ -2,7 +2,7 @@
   "id": "ashara-automations",
   "title": "Ashara Automations",
   "description": "Automatisations maison pour Ashara : sorts et effets contrôlés sans remplacer DAE.",
-  "version": "0.4.5",
+  "version": "0.4.6",
   "authors": [
     {
       "name": "Ashara"
