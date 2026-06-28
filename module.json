@@ -1,0 +1,51 @@
+{
+  "id": "ashara-automations",
+  "title": "Ashara Automations",
+  "description": "Automatisations maison pour Ashara : sorts et effets contrôlés sans remplacer DAE.",
+  "version": "0.4.0",
+  "authors": [
+    {
+      "name": "Ashara"
+    }
+  ],
+  "compatibility": {
+    "minimum": "13",
+    "verified": "13"
+  },
+  "scripts": [
+    "scripts/main.js"
+  ],
+  "packs": [
+    {
+      "name": "ashara-automation-macros",
+      "label": "Ashara Automations - Macros",
+      "path": "packs/ashara-automation-macros.db",
+      "type": "Macro",
+      "ownership": {
+        "PLAYER": "OBSERVER",
+        "ASSISTANT": "OWNER"
+      }
+    },
+    {
+      "name": "ashara-automation-spells",
+      "label": "Ashara Automations - Sorts corrigés",
+      "path": "packs/ashara-automation-spells.db",
+      "type": "Item",
+      "ownership": {
+        "PLAYER": "OBSERVER",
+        "ASSISTANT": "OWNER"
+      },
+      "system": "dnd5e"
+    },
+    {
+      "name": "ashara-automation-docs",
+      "label": "Ashara Automations - Documentation",
+      "path": "packs/ashara-automation-docs.db",
+      "type": "JournalEntry",
+      "ownership": {
+        "PLAYER": "OBSERVER",
+        "ASSISTANT": "OWNER"
+      }
+    }
+  ]
+}
