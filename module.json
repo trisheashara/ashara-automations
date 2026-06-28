@@ -47,5 +47,7 @@
         "ASSISTANT": "OWNER"
       }
     }
-  ]
+  ],
+  "manifest": "https://raw.githubusercontent.com/trisheashara/ashara-automations/main/module.json",
+  "download": "https://github.com/trisheashara/ashara-automations/archive/refs/heads/main.zip"
 }
