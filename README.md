@@ -61,6 +61,22 @@ Le module contient notamment des automatisations pour :
 - Jump / Saut
 - Expeditious Retreat / Repli expéditif
 
+### Automatisations en cours de refonte / non finalisées
+
+Les automatisations suivantes sont présentes dans le code mais ne doivent pas encore être considérées comme stables :
+
+- Hex / Maléfice
+  - cible et flags Ashara en cours de stabilisation ;
+  - effets visibles non finalisés ;
+  - interaction avec DAE / Midi-QOL encore à revoir ;
+  - dégâts bonus à ne pas considérer comme fiables pour le moment.
+
+- Hunter's Mark / Marque du chasseur
+  - cible et flags Ashara en cours de stabilisation ;
+  - effets visibles non finalisés ;
+  - interaction avec DAE / Midi-QOL encore à revoir ;
+  - dégâts bonus à ne pas considérer comme fiables pour le moment.
+
 Certaines automatisations peuvent être encore en test selon la version en cours.
 
 ## Commandes utiles en console Foundry
