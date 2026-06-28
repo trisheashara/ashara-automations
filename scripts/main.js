@@ -1374,36 +1374,56 @@
   }
 
   async function rollSanctuaryWisdomSave(attacker, dc, targetName) {
-    let total = null;
-    let roll = null;
+    const attackerName = attacker?.name || "La créature";
+
+    function safeNumber(value, fallback = 0) {
+      const number = Number(value);
+      return Number.isFinite(number) ? number : fallback;
+    }
+
+    const wisMod =
+      safeNumber(attacker?.system?.abilities?.wis?.mod, null) ??
+      safeNumber(attacker?.system?.abilities?.wis?.save, null) ??
+      safeNumber(attacker?.system?.abilities?.wis?.value, 10);
+
+    let modifier = safeNumber(attacker?.system?.abilities?.wis?.mod, null);
+
+    if (modifier === null) {
+      const score = safeNumber(attacker?.system?.abilities?.wis?.value, 10);
+      modifier = Math.floor((score - 10) / 2);
+    }
+
+    if (!Number.isFinite(modifier)) modifier = 0;
+
+    const formula = modifier >= 0 ? `1d20 + ${modifier}` : `1d20 - ${Math.abs(modifier)}`;
+
+    let roll;
 
     try {
-      if (typeof attacker.rollAbilitySave === "function") {
-        roll = await attacker.rollAbilitySave("wis", {
-          flavor: `Sanctuary / Sanctuaire - Ashara : sauvegarde de Sagesse DD ${dc} pour attaquer ${targetName}`
-        });
-        total = Number(roll?.total ?? roll?.terms?.[0]?.total ?? 0);
-      }
+      roll = await new Roll(formula).evaluate();
     } catch (err) {
-      error("Sanctuary : erreur actor.rollAbilitySave, fallback Roll manuel", err);
-    }
-
-    if (total === null || !Number.isFinite(total)) {
-      const mod = Number(attacker.system?.abilities?.wis?.save ?? attacker.system?.abilities?.wis?.mod ?? 0);
-      roll = await new Roll(`1d20 + ${mod}`).evaluate();
-
-      await roll.toMessage({
-        speaker: ChatMessage.getSpeaker({ actor: attacker }),
-        flavor: `Sanctuary / Sanctuaire - Ashara : sauvegarde de Sagesse DD ${dc} pour attaquer ${targetName}`
+      error("Sanctuary : échec du jet de sauvegarde custom, fallback 1d20 utilisé.", {
+        attacker: attackerName,
+        formula,
+        modifier,
+        err
       });
 
-      total = Number(roll.total || 0);
+      roll = await new Roll("1d20").evaluate();
     }
+
+    await roll.toMessage({
+      speaker: ChatMessage.getSpeaker({ actor: attacker }),
+      flavor: `<b>Sanctuary / Sanctuaire - Ashara</b><br>${attackerName} tente une sauvegarde de Sagesse contre DD ${dc} pour attaquer ${targetName}.`
+    });
+
+    const total = safeNumber(roll.total, 0);
+    const success = total >= dc;
 
     return {
       roll,
       total,
-      success: total >= dc
+      success
     };
   }
 
@@ -2137,7 +2157,7 @@
     refreshControlledItemUuids();
 
     window.ASHARA_AUTOMATIONS = {
-      version: "0.4.0",
+      version: "0.4.1",
       applyAid,
       removeAid,
       applyLongstrider,
