@@ -167,6 +167,12 @@
     }]);
   }
 
+  function getExplicitTargetActors() {
+    return Array.from(game.user.targets || [])
+      .map(t => t.actor)
+      .filter(Boolean);
+  }
+
   function getTargetActorsForItem(item, { requireExplicitTarget = false } = {}) {
     const targeted = Array.from(game.user.targets || [])
       .map(t => t.actor)
@@ -2425,10 +2431,11 @@ async function removeHex(actor, reason = "manual") {
     }
 
     if (spellKey === "hex") {
-      const targets = getTargetActorsForItem(item, { requireExplicitTarget: true });
+      const caster = item.actor;
+      const targets = getExplicitTargetActors().filter(actor => actor && actor !== caster);
 
       if (!targets.length) {
-        ui.notifications.warn("Ashara Automations : cible une créature pour Hex.");
+        ui.notifications.warn("Ashara Automations : cible une créature ennemie avec l’outil de ciblage pour Hex. Ne sélectionne pas seulement ton PJ.");
         return false;
       }
 
@@ -2450,10 +2457,11 @@ async function removeHex(actor, reason = "manual") {
     }
 
     if (spellKey === "huntersMark") {
-      const targets = getTargetActorsForItem(item, { requireExplicitTarget: true });
+      const caster = item.actor;
+      const targets = getExplicitTargetActors().filter(actor => actor && actor !== caster);
 
       if (!targets.length) {
-        ui.notifications.warn("Ashara Automations : cible une créature pour Hunter's Mark.");
+        ui.notifications.warn("Ashara Automations : cible une créature ennemie avec l’outil de ciblage pour Hunter's Mark. Ne sélectionne pas seulement ton PJ.");
         return false;
       }
 
@@ -2566,7 +2574,6 @@ async function removeHex(actor, reason = "manual") {
 
   async function applyAsharaBonusDamage({ workflow, target, damageFormula, damageType, label }) {
     const attacker = workflow?.actor;
-    const attackerToken = workflow?.token || canvas.tokens?.controlled?.[0] || null;
     const targetToken = getAsharaTargetToken(target);
     const targetActor = target?.actor || target?.document?.actor || targetToken?.actor;
 
@@ -2591,40 +2598,15 @@ async function removeHex(actor, reason = "manual") {
       flavor: `<b>${label} - Ashara</b><br>${attacker.name} inflige <b>${roll.total}</b> dégâts de ${damageType} supplémentaires à ${targetActor.name}.`
     });
 
-    try {
-      if (globalThis.MidiQOL?.DamageOnlyWorkflow && targetToken) {
-        new MidiQOL.DamageOnlyWorkflow(
-          attacker,
-          attackerToken,
-          roll.total,
-          damageType,
-          [targetToken],
-          roll,
-          {
-            flavor: `${label} - Ashara`,
-            itemCardUuid: workflow?.itemCardUuid,
-            asharaBonusDamage: true,
-            workflowOptions: {
-              asharaBonusDamage: true
-            }
-          }
-        );
-
-        log(`${label} : dégâts appliqués via DamageOnlyWorkflow`, {
-          attacker: attacker.name,
-          target: targetActor.name,
-          total: roll.total,
-          damageType
-        });
-
-        return true;
-      }
-    } catch (err) {
-      error(`${label} : DamageOnlyWorkflow indisponible ou en erreur.`, err);
-    }
-
     ChatMessage.create({
-      content: `<b>${label} - Ashara</b><br><b>À appliquer manuellement si Midi-QOL ne l'a pas fait :</b> ${roll.total} dégâts de ${damageType} à ${targetActor.name}.`
+      content: `<b>${label} - Ashara</b><br><b>À appliquer manuellement :</b> ${roll.total} dégâts de ${damageType} à ${targetActor.name}.<br><i>Application automatique désactivée, car DamageOnlyWorkflow soignait la cible sur ta configuration.</i>`
+    });
+
+    log(`${label} : dégâts bonus affichés sans application automatique`, {
+      attacker: attacker.name,
+      target: targetActor.name,
+      total: roll.total,
+      damageType
     });
 
     return true;
@@ -2859,6 +2841,20 @@ async function removeHex(actor, reason = "manual") {
   async function tryRunAutomationFromHook(item, source = "unknown") {
     if (!item?.name) return false;
     if (!isControlledSpellName(item.name)) return false;
+
+    const spellKey = getControlledSpellKey(item.name);
+
+    if (
+      ["hex", "huntersMark"].includes(spellKey) &&
+      ["midi-qol.RollComplete", "midi-qol.preItemRoll"].includes(source)
+    ) {
+      log("Hex/Hunter's Mark : relance Midi-QOL ignorée pour éviter une mauvaise cible", {
+        source,
+        name: item.name
+      });
+      return false;
+    }
+
     if (wasRecentlyHandled(item)) return false;
 
     markHandled(item);
@@ -3194,7 +3190,7 @@ async function removeHex(actor, reason = "manual") {
     refreshControlledItemUuids();
 
     window.ASHARA_AUTOMATIONS = {
-      version: "0.4.9",
+      version: "0.5.0",
       applyAid,
       removeAid,
       applyLongstrider,
