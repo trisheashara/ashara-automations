@@ -1764,11 +1764,169 @@
     return labels[ability] || ability || "caractéristique";
   }
 
-  async function removeHex(actor, reason = "manual") {
+  
+  function findAsharaActorByIdentity(identity = {}) {
+    if (!identity) return null;
+
+    const actors = Array.from(game.actors || []);
+
+    return actors.find(actor => {
+      if (!actor) return false;
+      if (identity.uuid && actor.uuid === identity.uuid) return true;
+      if (identity.id && actor.id === identity.id) return true;
+      if (identity.name && actor.name === identity.name) return true;
+      return false;
+    }) || null;
+  }
+
+  function getAsharaTargetIdentity(actor) {
+    if (!actor) return {};
+
+    return {
+      uuid: actor.uuid || "",
+      id: actor.id || "",
+      name: actor.name || ""
+    };
+  }
+
+  function asharaSameTargetIdentity(actor, identity = {}) {
+    if (!actor || !identity) return false;
+
+    if (identity.uuid && actor.uuid && identity.uuid === actor.uuid) return true;
+    if (identity.id && actor.id && identity.id === actor.id) return true;
+    if (identity.name && actor.name && identity.name === actor.name) return true;
+
+    return false;
+  }
+
+  async function clearAsharaConcentration(caster, reason = "manual") {
+    if (!caster) return false;
+
+    await caster.unsetFlag(MODULE_ID, "concentration");
+    await deleteAsharaEffect(caster, "concentration");
+
+    log("Concentration Ashara retirée", {
+      caster: caster.name,
+      reason
+    });
+
+    return true;
+  }
+
+  async function applyAsharaConcentration(caster, data = {}) {
+    if (!caster) return false;
+
+    const {
+      spellKey,
+      spellName,
+      targetActor,
+      durationSeconds = 3600,
+      icon = "icons/svg/upgrade.svg"
+    } = data;
+
+    await clearAsharaConcentration(caster, "new-concentration");
+
+    const concentrationData = {
+      spellKey,
+      spellName,
+      target: getAsharaTargetIdentity(targetActor),
+      appliedAt: Date.now()
+    };
+
+    await caster.setFlag(MODULE_ID, "concentration", concentrationData);
+
+    await createMarkerEffect(caster, {
+      key: "concentration",
+      name: `Concentrating: ${spellName} - Ashara`,
+      icon,
+      durationSeconds,
+      data: {
+        spell: "concentration",
+        concentrationSpell: spellKey,
+        spellName,
+        target: concentrationData.target
+      }
+    });
+
+    ChatMessage.create({
+      content: `<b>Concentration - Ashara</b><br>${caster.name} se concentre sur <b>${spellName}</b>${targetActor ? ` contre ${targetActor.name}` : ""}.`
+    });
+
+    log("Concentration Ashara appliquée", {
+      caster: caster.name,
+      spellKey,
+      spellName,
+      target: targetActor?.name
+    });
+
+    return true;
+  }
+
+  async function removeAsharaMarkFromTarget(targetActor, spellKey, reason = "concentration-ended") {
+    if (!targetActor) return false;
+
+    await targetActor.unsetFlag(MODULE_ID, spellKey);
+    await deleteAsharaEffect(targetActor, spellKey);
+
+    log("Marque Ashara retirée via concentration", {
+      target: targetActor.name,
+      spellKey,
+      reason
+    });
+
+    return true;
+  }
+
+  async function removeAsharaMarksFromConcentration(caster, reason = "concentration-ended") {
+    if (!caster) return false;
+
+    const concentration = caster.getFlag?.(MODULE_ID, "concentration");
+    if (!concentration) return false;
+
+    const spellKey = concentration.spellKey;
+    const targetActor = findAsharaActorByIdentity(concentration.target);
+
+    await caster.unsetFlag(MODULE_ID, "concentration");
+
+    if (spellKey === "hex" && targetActor) {
+      await removeAsharaMarkFromTarget(targetActor, "hex", reason);
+    }
+
+    if (spellKey === "huntersMark" && targetActor) {
+      await removeAsharaMarkFromTarget(targetActor, "huntersMark", reason);
+    }
+
+    ChatMessage.create({
+      content: `<b>Concentration - Ashara</b><br>La concentration de ${caster.name} prend fin${targetActor ? ` : la marque sur ${targetActor.name} est retirée.` : "."}`
+    });
+
+    log("Concentration Ashara terminée", {
+      caster: caster.name,
+      spellKey,
+      target: targetActor?.name,
+      reason
+    });
+
+    return true;
+  }
+
+
+async function removeHex(actor, reason = "manual") {
     const data = actor.getFlag(MODULE_ID, "hex");
     if (!data) return false;
 
     await actor.unsetFlag(MODULE_ID, "hex");
+
+    const caster = findAsharaActorByIdentity(data.caster);
+    const concentration = caster?.getFlag?.(MODULE_ID, "concentration");
+
+    if (
+      caster &&
+      concentration?.spellKey === "hex" &&
+      asharaSameTargetIdentity(actor, concentration.target)
+    ) {
+      await clearAsharaConcentration(caster, `hex-removed-${reason}`);
+    }
 
     log("Hex retiré", {
       actor: actor.name,
@@ -1783,6 +1941,17 @@
     if (!data) return false;
 
     await actor.unsetFlag(MODULE_ID, "huntersMark");
+
+    const caster = findAsharaActorByIdentity(data.caster);
+    const concentration = caster?.getFlag?.(MODULE_ID, "concentration");
+
+    if (
+      caster &&
+      concentration?.spellKey === "huntersMark" &&
+      asharaSameTargetIdentity(actor, concentration.target)
+    ) {
+      await clearAsharaConcentration(caster, `hunters-mark-removed-${reason}`);
+    }
 
     log("Hunter's Mark retiré", {
       actor: actor.name,
@@ -1826,6 +1995,14 @@
       }
     });
 
+    await applyAsharaConcentration(caster, {
+      spellKey: "hex",
+      spellName: "Hex / Maléfice",
+      targetActor,
+      durationSeconds,
+      icon: "icons/magic/unholy/strike-hand-glow-pink.webp"
+    });
+
     log("Hex appliqué", {
       caster: caster?.name,
       target: targetActor.name,
@@ -1863,6 +2040,14 @@
         damageDie: "1d6",
         damageType: "force"
       }
+    });
+
+    await applyAsharaConcentration(caster, {
+      spellKey: "huntersMark",
+      spellName: "Hunter's Mark / Marque du chasseur",
+      targetActor,
+      durationSeconds,
+      icon: "icons/skills/ranged/target-bullseye-arrow-blue.webp"
     });
 
     log("Hunter's Mark appliqué", {
@@ -2727,6 +2912,7 @@
     if (key === "jump") await removeJump(actor, "effect-delete");
     if (key === "hex") await removeHex(actor, "effect-delete");
     if (key === "huntersMark") await removeHuntersMark(actor, "effect-delete");
+    if (key === "concentration") await removeAsharaMarksFromConcentration(actor, "effect-delete");
     if (key === "sanctuary") await removeSanctuary(actor, "effect-delete");
   });
 
@@ -2751,6 +2937,7 @@
     if (key === "jump") await removeJump(actor, "effect-disabled");
     if (key === "hex") await removeHex(actor, "effect-disabled");
     if (key === "huntersMark") await removeHuntersMark(actor, "effect-disabled");
+    if (key === "concentration") await removeAsharaMarksFromConcentration(actor, "effect-disabled");
     if (key === "sanctuary") await removeSanctuary(actor, "effect-disabled");
   });
 
@@ -3005,7 +3192,7 @@
     refreshControlledItemUuids();
 
     window.ASHARA_AUTOMATIONS = {
-      version: "0.4.7",
+      version: "0.4.8",
       applyAid,
       removeAid,
       applyLongstrider,
