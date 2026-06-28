@@ -2415,7 +2415,12 @@
           roll,
           {
             flavor: `${label} - Ashara`,
-            itemCardId: workflow?.itemCardId
+            itemCardUuid: workflow?.itemCardUuid,
+            itemCardId: workflow?.itemCardId,
+            asharaBonusDamage: true,
+            workflowOptions: {
+              asharaBonusDamage: true
+            }
           }
         );
 
@@ -2441,6 +2446,27 @@
 
   async function handleHexHuntersMarkExtraDamage(workflow) {
     try {
+      const itemName = String(workflow?.item?.name || "");
+
+      // Très important :
+      // DamageOnlyWorkflow crée un nouveau workflow Midi-QOL.
+      // Sans cette sécurité, nos dégâts Hunter's Mark / Hex déclenchent eux-mêmes Hunter's Mark / Hex en boucle.
+      if (
+        workflow?.constructor?.name === "DamageOnlyWorkflow" ||
+        workflow?.isDamageOnlyWorkflow ||
+        itemName.includes("Hunter's Mark / Marque du chasseur - Ashara") ||
+        itemName.includes("Hex / Maléfice - Ashara") ||
+        itemName.includes("Hex / Malefice - Ashara") ||
+        workflow?.options?.asharaBonusDamage === true ||
+        workflow?.workflowOptions?.asharaBonusDamage === true
+      ) {
+        log("Hex/Hunter's Mark : workflow de dégâts bonus ignoré pour éviter une boucle", {
+          item: itemName,
+          workflowClass: workflow?.constructor?.name
+        });
+        return false;
+      }
+
       if (!asharaIsAttackDamageWorkflow(workflow)) return false;
 
       const attacker = workflow?.actor;
@@ -2863,7 +2889,7 @@
     refreshControlledItemUuids();
 
     window.ASHARA_AUTOMATIONS = {
-      version: "0.4.4",
+      version: "0.4.5",
       applyAid,
       removeAid,
       applyLongstrider,
