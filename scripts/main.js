@@ -2111,10 +2111,12 @@ async function removeHex(actor, reason = "manual") {
     if (!flag) return null;
 
     const effect = targetActor.effects?.find(e => e.getFlag(MODULE_ID, "key") === key);
-    if (!effect) return null;
-    if (effect.disabled) return null;
 
-    const caster = flag.caster || effect.getFlag?.(MODULE_ID, "caster") || {};
+    // DAE / Midi peuvent supprimer ou recréer les effets visibles.
+    // Le flag Ashara reste la source fiable.
+    if (effect?.disabled) return null;
+
+    const caster = flag.caster || effect?.getFlag?.(MODULE_ID, "caster") || {};
 
     if (!asharaSameActorIdentity(attacker, caster)) return null;
 
@@ -3192,7 +3194,7 @@ async function removeHex(actor, reason = "manual") {
     refreshControlledItemUuids();
 
     window.ASHARA_AUTOMATIONS = {
-      version: "0.4.8",
+      version: "0.4.9",
       applyAid,
       removeAid,
       applyLongstrider,
@@ -3335,6 +3337,22 @@ async function removeHex(actor, reason = "manual") {
     log("Hex/Hunter's Mark : dégâts supplémentaires RollComplete activés.");
 
     installHexAbilityCheckDisadvantage();
+
+    setTimeout(() => {
+      const ActorClass = CONFIG?.Actor?.documentClass;
+      if (ActorClass?.prototype) {
+        ActorClass.prototype.__asharaHexAbilityCheckDisadvantageInstalled = false;
+      }
+      installHexAbilityCheckDisadvantage();
+    }, 2500);
+
+    setTimeout(() => {
+      const ActorClass = CONFIG?.Actor?.documentClass;
+      if (ActorClass?.prototype) {
+        ActorClass.prototype.__asharaHexAbilityCheckDisadvantageInstalled = false;
+      }
+      installHexAbilityCheckDisadvantage();
+    }, 5000);
 
 
 
