@@ -1,0 +1,592 @@
+=== Branche actuelle ===
+refactor/ashara-automations-cleanup
+
+=== Nombre de lignes ===
+3358 scripts/main.js
+
+=== Fonctions classiques, même indentées ===
+70:  function log(...args) {
+74:  function warn(...args) {
+78:  function error(...args) {
+82:  function normalizeName(name) {
+90:  function isNameIn(name, list) {
+95:  function getControlledSpellKey(name) {
+103:  function isControlledSpellName(name) {
+107:  function refreshControlledItemUuids() {
+127:  function getHp(actor) {
+131:  function getWalkSpeed(actor) {
+135:  function getDarkvision(actor) {
+139:  function getAsharaEffect(actor, key) {
+170:  function getExplicitTargetActors() {
+176:  function getTargetActorsForItem(item, { requireExplicitTarget = false } = {}) {
+484:  function getAcBonus(actor) {
+490:  function getAcCalc(actor) {
+494:  function getTempHp(actor) {
+898:  function getArmorOfAgathysDamage(actor) {
+911:  function isLikelyMeleeAttack(workflow) {
+1282:  function getCasterSpellDc(item) {
+1353:  function hasSanctuary(actor) {
+1366:  function getSanctuarySaveDc(actor, tokenOrDocument = null) {
+1379:  function getSanctuaryWorkflowTargets(workflow) {
+1382:    function normalize(entry) {
+1405:    function collect(set) {
+1435:  function isSanctuaryAttackWorkflow(workflow) {
+1457:  function getSanctuaryWorkflowId(workflow) {
+1464:    function safeNumber(value, fallback = 0) {
+1515:  function tryAbortSanctuaryWorkflow(workflow) {
+1687:  function getAsharaActorIdentity(actor) {
+1697:  function asharaSameActorIdentity(actor, identity = {}) {
+1707:  function getHuntersMarkDurationSeconds(spellLevel) {
+1716:  function getHuntersMarkDurationLabel(spellLevel) {
+1760:  function getAbilityLabel(ability) {
+1774:  function findAsharaActorByIdentity(identity = {}) {
+1788:  function getAsharaTargetIdentity(actor) {
+1798:  function asharaSameTargetIdentity(actor, identity = {}) {
+2069:  function getAsharaDamageTargets(workflow) {
+2072:    function collect(set) {
+2089:  function asharaIsAttackDamageWorkflow(workflow) {
+2113:  function getAsharaMarkData(targetActor, key, attacker) {
+2132:  function asharaHexHuntersMarkDamageBonus(workflow) {
+2512:  function isLegacyAidEffect(effect) {
+2517:  function isEffectFromControlledItem(effect) {
+2534:  function markHandled(item) {
+2539:  function wasRecentlyHandled(item) {
+2551:  function getAsharaWorkflowId(workflow) {
+2555:  function getAsharaTargetToken(target) {
+2725:  function getHexAbilityForActor(actor) {
+2742:  function forceDisadvantageOnRollOptions(options = {}) {
+2761:  function getSkillAbility(actor, skillId) {
+2774:  function installHexAbilityCheckDisadvantage() {
+2969:  function asharaNormalizeText(value) {
+2976:  function asharaHasProtectionEvilGood(actor) {
+2989:  function asharaGetActorTypeText(actor) {
+2994:    function collect(v) {
+3030:  function asharaIsProtectionCreature(actor) {
+3051:  function asharaGetWorkflowTargets(workflow) {
+3054:    function collect(set) {
+3074:  function asharaIsAttackWorkflow(workflow) {
+3098:  function asharaForceDisadvantage(workflow, source = "unknown") {
+
+=== Fonctions async, même indentées ===
+143:  async function deleteAsharaEffect(actor, key) {
+151:  async function createMarkerEffect(actor, { key, name, icon, durationSeconds, data = {}, changes = [] }) {
+196:  async function removeAid(actor, reason = "manual") {
+230:  async function applyAid(actor, spellLevel = 2) {
+287:  async function removeLongstrider(actor, reason = "manual") {
+310:  async function applyLongstrider(actor) {
+351:  async function removeDarkvision(actor, reason = "manual") {
+374:  async function applyDarkvision(actor, range = 60) {
+416:  async function askAidLevel() {
+452:  async function askDarkvisionRange() {
+498:  async function removeMageArmor(actor, reason = "manual") {
+519:  async function applyMageArmor(actor) {
+555:  async function removeShieldOfFaith(actor, reason = "manual") {
+569:  async function applyShieldOfFaith(actor) {
+616:  async function removeFalseLife(actor, reason = "manual") {
+647:  async function applyFalseLife(actor, amount) {
+693:  async function removeHeroism(actor, reason = "manual") {
+729:  async function applyHeroism(actor, tempPerTurn) {
+777:  async function refreshHeroism(actor) {
+812:  async function removeArmorOfAgathys(actor, reason = "manual") {
+843:  async function applyArmorOfAgathys(actor, spellLevel = 1) {
+956:  async function applyColdDamageToActor(actor, amount, flavor = "Armor of Agathys - Ashara") {
+999:  async function handleArmorOfAgathysRetaliation(workflow) {
+1063:  async function removeProtectionEvilGood(actor, reason = "manual") {
+1077:  async function applyProtectionEvilGood(actor) {
+1104:  async function askSpellLevel(title, min = 1, max = 9) {
+1139:  async function askNumber(title, label, defaultValue = 1) {
+1166:  async function rollFalseLife(spellLevel = 1) {
+1183:  async function removeExpeditiousRetreat(actor, reason = "manual") {
+1197:  async function applyExpeditiousRetreat(actor) {
+1224:  async function removeJump(actor, reason = "manual") {
+1238:  async function applyJump(actor) {
+1268:  async function removeSanctuary(actor, reason = "manual") {
+1295:  async function applySanctuary(actor, item) {
+1461:  async function rollSanctuaryWisdomSave(attacker, dc, targetName) {
+1535:  async function askSanctuaryDecision(attacker, target, dc) {
+1572:  async function sanctuaryReminder(workflow, source = "unknown") {
+1725:  async function askHexAbility() {
+1808:  async function clearAsharaConcentration(caster, reason = "manual") {
+1822:  async function applyAsharaConcentration(caster, data = {}) {
+1871:  async function removeAsharaMarkFromTarget(targetActor, spellKey, reason = "concentration-ended") {
+1886:  async function removeAsharaMarksFromConcentration(caster, reason = "concentration-ended") {
+1920:async function removeHex(actor, reason = "manual") {
+1945:  async function removeHuntersMark(actor, reason = "manual") {
+1970:  async function applyHex(targetActor, item) {
+2021:  async function applyHuntersMark(targetActor, item, spellLevel = 1) {
+2185:  async function runAutomationForItem(item) {
+2575:  async function applyAsharaBonusDamage({ workflow, target, damageFormula, damageType, label }) {
+2615:  async function handleHexHuntersMarkExtraDamage(workflow) {
+2841:  async function tryRunAutomationFromHook(item, source = "unknown") {
+3171:  async function applySanctuaryToSelected() {
+
+=== Constantes/fonctions fléchées probables ===
+1318:    const matchingTokens = Array.from(canvas?.tokens?.placeables || []).filter(token => {
+1359:    const effect = actor.effects?.find(e => e.getFlag(MODULE_ID, "key") === "sanctuary");
+1586:    const sanctuaryTargets = targets.filter(target => {
+2119:    const effect = targetActor.effects?.find(e => e.getFlag(MODULE_ID, "key") === key);
+2435:      const targets = getExplicitTargetActors().filter(actor => actor && actor !== caster);
+2446:      const flagText = targets.map(a => {
+2461:      const targets = getExplicitTargetActors().filter(actor => actor && actor !== caster);
+2731:    const effect = actor.effects?.find(e => e.getFlag(MODULE_ID, "key") === "hex");
+2982:    const effect = actor.effects?.find(e => e.getFlag(MODULE_ID, "key") === "protectionEvilGood");
+3105:    const protectedTargets = targets.filter(t => asharaHasProtectionEvilGood(t.actor));
+3250:      const item = args.find(a => a?.documentName === "Item" || a?.constructor?.documentName === "Item" || a?.type);
+
+=== Hooks Foundry ===
+2873:  Hooks.on("preCreateActiveEffect", effect => {
+2893:  Hooks.on("deleteActiveEffect", async effect => {
+2917:  Hooks.on("updateActiveEffect", async (effect, changes) => {
+2943:  Hooks.on("updateCombat", async combat => {
+2956:  Hooks.on("createItem", item => {
+2960:  Hooks.on("updateItem", item => {
+2964:  Hooks.on("deleteItem", item => {
+3189:  Hooks.once("ready", () => {
+3249:    Hooks.on("dnd5e.useItem", async (...args) => {
+3259:    Hooks.on("midi-qol.RollComplete", async workflow => {
+3271:    Hooks.on("midi-qol.preItemRoll", async workflow => {
+3282:    Hooks.on("midi-qol.preAttackRoll", workflow => {
+3290:    Hooks.on("midi-qol.preItemRoll", workflow => {
+3298:    Hooks.on("midi-qol.preCheckHits", workflow => {
+3309:    Hooks.on("midi-qol.preAttackRoll", async workflow => {
+3320:    Hooks.on("midi-qol.preItemRoll", async workflow => {
+
+=== Wrappers directs dangereux ===
+2781:    if (ActorClass.prototype.__asharaHexAbilityCheckDisadvantageInstalled) return;
+2782:    ActorClass.prototype.__asharaHexAbilityCheckDisadvantageInstalled = true;
+2784:    const originalRollAbilityTest = ActorClass.prototype.rollAbilityTest;
+2785:    const originalRollSkill = ActorClass.prototype.rollSkill;
+2788:      ActorClass.prototype.rollAbilityTest = async function(abilityId, options = {}) {
+2810:      ActorClass.prototype.rollSkill = async function(skillId, options = {}) {
+3224:    if (!ItemClass.prototype._asharaAutomationsWrapped) {
+3225:      const originalUse = ItemClass.prototype.use;
+3227:      ItemClass.prototype.use = async function(...args) {
+3245:      ItemClass.prototype._asharaAutomationsWrapped = true;
+3340:        ActorClass.prototype.__asharaHexAbilityCheckDisadvantageInstalled = false;
+3348:        ActorClass.prototype.__asharaHexAbilityCheckDisadvantageInstalled = false;
+
+=== ActiveEffect / effets ===
+140:    return actor.effects.find(e => e.getFlag(MODULE_ID, "key") === key);
+152:    await actor.createEmbeddedDocuments("ActiveEffect", [{
+1359:    const effect = actor.effects?.find(e => e.getFlag(MODULE_ID, "key") === "sanctuary");
+2119:    const effect = targetActor.effects?.find(e => e.getFlag(MODULE_ID, "key") === key);
+2731:    const effect = actor.effects?.find(e => e.getFlag(MODULE_ID, "key") === "hex");
+2873:  Hooks.on("preCreateActiveEffect", effect => {
+2893:  Hooks.on("deleteActiveEffect", async effect => {
+2917:  Hooks.on("updateActiveEffect", async (effect, changes) => {
+2982:    const effect = actor.effects?.find(e => e.getFlag(MODULE_ID, "key") === "protectionEvilGood");
+
+=== Flags Ashara ===
+140:    return actor.effects.find(e => e.getFlag(MODULE_ID, "key") === key);
+197:    const data = actor.getFlag(MODULE_ID, "aid");
+215:    await actor.unsetFlag(MODULE_ID, "aid");
+256:    await actor.setFlag(MODULE_ID, "aid", {
+288:    const data = actor.getFlag(MODULE_ID, "longstrider");
+298:    await actor.unsetFlag(MODULE_ID, "longstrider");
+324:    await actor.setFlag(MODULE_ID, "longstrider", {
+352:    const data = actor.getFlag(MODULE_ID, "darkvision");
+362:    await actor.unsetFlag(MODULE_ID, "darkvision");
+389:    await actor.setFlag(MODULE_ID, "darkvision", {
+499:    const data = actor.getFlag(MODULE_ID, "mageArmor");
+508:    await actor.unsetFlag(MODULE_ID, "mageArmor");
+530:    await actor.setFlag(MODULE_ID, "mageArmor", {
+556:    const data = actor.getFlag(MODULE_ID, "shieldOfFaith");
+559:    await actor.unsetFlag(MODULE_ID, "shieldOfFaith");
+575:    await actor.setFlag(MODULE_ID, "shieldOfFaith", {
+617:    const data = actor.getFlag(MODULE_ID, "falseLife");
+633:    await actor.unsetFlag(MODULE_ID, "falseLife");
+663:    await actor.setFlag(MODULE_ID, "falseLife", {
+694:    const data = actor.getFlag(MODULE_ID, "heroism");
+714:    await actor.unsetFlag(MODULE_ID, "heroism");
+746:    await actor.setFlag(MODULE_ID, "heroism", {
+778:    const data = actor.getFlag(MODULE_ID, "heroism");
+791:      await actor.setFlag(MODULE_ID, "heroism", {
+813:    const data = actor.getFlag(MODULE_ID, "armorOfAgathys");
+829:    await actor.unsetFlag(MODULE_ID, "armorOfAgathys");
+862:    await actor.setFlag(MODULE_ID, "armorOfAgathys", {
+899:    const data = actor?.getFlag?.(MODULE_ID, "armorOfAgathys");
+1064:    const data = actor.getFlag(MODULE_ID, "protectionEvilGood");
+1067:    await actor.unsetFlag(MODULE_ID, "protectionEvilGood");
+1083:    await actor.setFlag(MODULE_ID, "protectionEvilGood", {
+1184:    const data = actor.getFlag(MODULE_ID, "expeditiousRetreat");
+1187:    await actor.unsetFlag(MODULE_ID, "expeditiousRetreat");
+1203:    await actor.setFlag(MODULE_ID, "expeditiousRetreat", {
+1225:    const data = actor.getFlag(MODULE_ID, "jump");
+1228:    await actor.unsetFlag(MODULE_ID, "jump");
+1244:    await actor.setFlag(MODULE_ID, "jump", {
+1269:    const data = actor.getFlag(MODULE_ID, "sanctuary");
+1272:    await actor.unsetFlag(MODULE_ID, "sanctuary");
+1302:    await actor.setFlag(MODULE_ID, "sanctuary", {
+1328:        await token.document.setFlag(MODULE_ID, "sanctuary", {
+1356:    const flag = actor.getFlag?.(MODULE_ID, "sanctuary");
+1359:    const effect = actor.effects?.find(e => e.getFlag(MODULE_ID, "key") === "sanctuary");
+1367:    const actorDc = Number(actor?.getFlag?.(MODULE_ID, "sanctuary")?.saveDc || 0);
+1370:    const tokenDc = Number(tokenOrDocument?.getFlag?.(MODULE_ID, "sanctuary")?.saveDc || 0);
+1373:    const documentDc = Number(tokenOrDocument?.document?.getFlag?.(MODULE_ID, "sanctuary")?.saveDc || 0);
+1588:      const tokenFlag = !!target.token?.document?.getFlag?.(MODULE_ID, "sanctuary");
+1589:      const documentFlag = !!target.document?.getFlag?.(MODULE_ID, "sanctuary");
+1601:          actorFlag: !!t.actor?.getFlag?.(MODULE_ID, "sanctuary"),
+1602:          tokenFlag: !!t.token?.document?.getFlag?.(MODULE_ID, "sanctuary"),
+1603:          documentFlag: !!t.document?.getFlag?.(MODULE_ID, "sanctuary")
+1811:    await caster.unsetFlag(MODULE_ID, "concentration");
+1842:    await caster.setFlag(MODULE_ID, "concentration", concentrationData);
+1874:    await targetActor.unsetFlag(MODULE_ID, spellKey);
+1889:    const concentration = caster.getFlag?.(MODULE_ID, "concentration");
+1895:    await caster.unsetFlag(MODULE_ID, "concentration");
+1921:    const data = actor.getFlag(MODULE_ID, "hex");
+1924:    await actor.unsetFlag(MODULE_ID, "hex");
+1927:    const concentration = caster?.getFlag?.(MODULE_ID, "concentration");
+1946:    const data = actor.getFlag(MODULE_ID, "huntersMark");
+1949:    await actor.unsetFlag(MODULE_ID, "huntersMark");
+1952:    const concentration = caster?.getFlag?.(MODULE_ID, "concentration");
+1982:    await targetActor.setFlag(MODULE_ID, "hex", {
+2029:    await targetActor.setFlag(MODULE_ID, "huntersMark", {
+2116:    const flag = targetActor.getFlag?.(MODULE_ID, key);
+2119:    const effect = targetActor.effects?.find(e => e.getFlag(MODULE_ID, "key") === key);
+2125:    const caster = flag.caster || effect?.getFlag?.(MODULE_ID, "caster") || {};
+2447:        const ability = a.getFlag(MODULE_ID, "hex")?.ability;
+2728:    const flag = actor.getFlag?.(MODULE_ID, "hex");
+2731:    const effect = actor.effects?.find(e => e.getFlag(MODULE_ID, "key") === "hex");
+2874:    const isAsharaEffect = !!effect.getFlag?.(MODULE_ID, "key");
+2894:    const key = effect.getFlag(MODULE_ID, "key");
+2918:    const key = effect.getFlag(MODULE_ID, "key");
+2979:    const flag = actor.getFlag(MODULE_ID, "protectionEvilGood");
+2982:    const effect = actor.effects?.find(e => e.getFlag(MODULE_ID, "key") === "protectionEvilGood");
+
+=== Sorts principaux repérés ===
+6:    aid: {
+7:      key: "aid",
+8:      names: ["aid", "aide"]
+10:    longstrider: {
+11:      key: "longstrider",
+12:      names: ["longstrider", "grandes foulées", "grandes foulees"]
+34:    armorOfAgathys: {
+35:      key: "armorOfAgathys",
+36:      names: ["armor of agathys", "armure d'agathys", "armure d’agathys"]
+38:    protectionEvilGood: {
+39:      key: "protectionEvilGood",
+41:        "protection from evil and good",
+42:        "protection contre le mal et le bien",
+43:        "protection contre le bien et le mal"
+54:    hex: {
+55:      key: "hex",
+56:      names: ["hex", "maléfice", "malefice"]
+58:    huntersMark: {
+59:      key: "huntersMark",
+60:      names: ["hunter's mark", "hunters mark", "marque du chasseur", "hunter’s mark"]
+62:    sanctuary: {
+63:      key: "sanctuary",
+64:      names: ["sanctuary", "sanctuaire", "sanctuary / sanctuaire", "sanctuaire / sanctuary"]
+196:  async function removeAid(actor, reason = "manual") {
+197:    const data = actor.getFlag(MODULE_ID, "aid");
+215:    await actor.unsetFlag(MODULE_ID, "aid");
+217:    log("Aid retiré", {
+230:  async function applyAid(actor, spellLevel = 2) {
+236:    const key = "aid";
+256:    await actor.setFlag(MODULE_ID, "aid", {
+264:      name: `Aid - Ashara +${bonus} PV max`,
+268:        spell: "aid",
+274:    log("Aid appliqué", {
+287:  async function removeLongstrider(actor, reason = "manual") {
+288:    const data = actor.getFlag(MODULE_ID, "longstrider");
+298:    await actor.unsetFlag(MODULE_ID, "longstrider");
+300:    log("Longstrider retiré", {
+310:  async function applyLongstrider(actor) {
+311:    const key = "longstrider";
+324:    await actor.setFlag(MODULE_ID, "longstrider", {
+332:      name: "Longstrider - Ashara +10 ft",
+336:        spell: "longstrider",
+342:    log("Longstrider appliqué", {
+416:  async function askAidLevel() {
+419:        title: "Aid / Aide - Ashara",
+424:              <select id="aid-level">
+440:            callback: html => resolve(Number(html.find("#aid-level").val()))
+812:  async function removeArmorOfAgathys(actor, reason = "manual") {
+813:    const data = actor.getFlag(MODULE_ID, "armorOfAgathys");
+829:    await actor.unsetFlag(MODULE_ID, "armorOfAgathys");
+831:    log("Armor of Agathys retiré", {
+843:  async function applyArmorOfAgathys(actor, spellLevel = 1) {
+844:    const key = "armorOfAgathys";
+862:    await actor.setFlag(MODULE_ID, "armorOfAgathys", {
+872:      name: `Armor of Agathys - Ashara ${amount} PV temp`,
+876:        spell: "armorOfAgathys",
+884:    log("Armor of Agathys appliqué", {
+896:  const agathysHandledWorkflows = new Set();
+898:  function getArmorOfAgathysDamage(actor) {
+899:    const data = actor?.getFlag?.(MODULE_ID, "armorOfAgathys");
+956:  async function applyColdDamageToActor(actor, amount, flavor = "Armor of Agathys - Ashara") {
+999:  async function handleArmorOfAgathysRetaliation(workflow) {
+1004:    if (agathysHandledWorkflows.has(workflowId)) return false;
+1005:    agathysHandledWorkflows.add(workflowId);
+1007:    setTimeout(() => agathysHandledWorkflows.delete(workflowId), 30000);
+1010:      log("Armor of Agathys ignoré : attaque non identifiée comme mêlée", {
+1027:      log("Armor of Agathys ignoré : aucune cible touchée détectée.");
+1037:      const coldDamage = getArmorOfAgathysDamage(targetActor);
+1043:        `Armor of Agathys / Armure d’Agathys - Ashara`
+1047:        content: `<b>Armor of Agathys / Armure d’Agathys - Ashara</b><br>${targetActor.name} est touché en mêlée : ${attackerActor.name} reçoit <b>${coldDamage}</b> dégâts de froid.`
+1050:      log("Armor of Agathys riposte", {
+1063:  async function removeProtectionEvilGood(actor, reason = "manual") {
+1064:    const data = actor.getFlag(MODULE_ID, "protectionEvilGood");
+1067:    await actor.unsetFlag(MODULE_ID, "protectionEvilGood");
+1069:    log("Protection from Evil and Good retiré", {
+1077:  async function applyProtectionEvilGood(actor) {
+1078:    const key = "protectionEvilGood";
+1083:    await actor.setFlag(MODULE_ID, "protectionEvilGood", {
+1089:      name: "Protection from Evil and Good - Ashara",
+1093:        spell: "protectionEvilGood"
+1097:    log("Protection from Evil and Good appliqué", {
+1268:  async function removeSanctuary(actor, reason = "manual") {
+1269:    const data = actor.getFlag(MODULE_ID, "sanctuary");
+1272:    await actor.unsetFlag(MODULE_ID, "sanctuary");
+1274:    log("Sanctuary retiré", {
+1295:  async function applySanctuary(actor, item) {
+1296:    const key = "sanctuary";
+1302:    await actor.setFlag(MODULE_ID, "sanctuary", {
+1309:      name: `Sanctuary - Ashara DC ${saveDc}`,
+1313:        spell: "sanctuary",
+1328:        await token.document.setFlag(MODULE_ID, "sanctuary", {
+1336:        log("Sanctuary : impossible de poser le flag sur le token", {
+1344:    log("Sanctuary appliqué", {
+1353:  function hasSanctuary(actor) {
+1356:    const flag = actor.getFlag?.(MODULE_ID, "sanctuary");
+1359:    const effect = actor.effects?.find(e => e.getFlag(MODULE_ID, "key") === "sanctuary");
+1366:  function getSanctuarySaveDc(actor, tokenOrDocument = null) {
+1367:    const actorDc = Number(actor?.getFlag?.(MODULE_ID, "sanctuary")?.saveDc || 0);
+1370:    const tokenDc = Number(tokenOrDocument?.getFlag?.(MODULE_ID, "sanctuary")?.saveDc || 0);
+1373:    const documentDc = Number(tokenOrDocument?.document?.getFlag?.(MODULE_ID, "sanctuary")?.saveDc || 0);
+1379:  function getSanctuaryWorkflowTargets(workflow) {
+1435:  function isSanctuaryAttackWorkflow(workflow) {
+1455:  const sanctuaryHandledWorkflows = new Set();
+1457:  function getSanctuaryWorkflowId(workflow) {
+1461:  async function rollSanctuaryWisdomSave(attacker, dc, targetName) {
+1490:      error("Sanctuary : échec du jet de sauvegarde custom, fallback 1d20 utilisé.", {
+1502:      flavor: `<b>Sanctuary / Sanctuaire - Ashara</b><br>${attackerName} tente une sauvegarde de Sagesse contre DD ${dc} pour attaquer ${targetName}.`
+1515:  function tryAbortSanctuaryWorkflow(workflow) {
+1531:      log("Sanctuary : impossible de vider les cibles via setTargets", err);
+1535:  async function askSanctuaryDecision(attacker, target, dc) {
+1541:        title: "Sanctuary / Sanctuaire - Ashara",
+1544:            <p><b>${attackerName}</b> tente d'attaquer <b>${targetName}</b>, qui est sous <b>Sanctuary</b>.</p>
+1572:  async function sanctuaryReminder(workflow, source = "unknown") {
+1573:    if (!isSanctuaryAttackWorkflow(workflow)) return true;
+1575:    const workflowId = getSanctuaryWorkflowId(workflow);
+1577:    if (sanctuaryHandledWorkflows.has(workflowId)) return true;
+1578:    sanctuaryHandledWorkflows.add(workflowId);
+1579:    setTimeout(() => sanctuaryHandledWorkflows.delete(workflowId), 30000);
+1584:    const targets = getSanctuaryWorkflowTargets(workflow);
+1586:    const sanctuaryTargets = targets.filter(target => {
+1587:      const actorHas = hasSanctuary(target.actor);
+1588:      const tokenFlag = !!target.token?.document?.getFlag?.(MODULE_ID, "sanctuary");
+1589:      const documentFlag = !!target.document?.getFlag?.(MODULE_ID, "sanctuary");
+1594:    if (!sanctuaryTargets.length) {
+1595:      log("Sanctuary ignoré : aucune cible protégée détectée", {
+1601:          actorFlag: !!t.actor?.getFlag?.(MODULE_ID, "sanctuary"),
+1602:          tokenFlag: !!t.token?.document?.getFlag?.(MODULE_ID, "sanctuary"),
+1603:          documentFlag: !!t.document?.getFlag?.(MODULE_ID, "sanctuary")
+1609:    for (const target of sanctuaryTargets) {
+1610:      const dc = getSanctuarySaveDc(target.actor, target.token?.document || target.document);
+1611:      const decision = await askSanctuaryDecision(attacker, target, dc);
+1615:          content: `<b>Sanctuary / Sanctuaire - Ashara</b><br>Le MJ autorise l'attaque de ${attacker.name} contre ${target.name}.`
+1618:        log("Sanctuary : attaque autorisée manuellement", {
+1629:        tryAbortSanctuaryWorkflow(workflow);
+1632:          content: `<b>Sanctuary / Sanctuaire - Ashara</b><br>Le MJ bloque l'attaque de ${attacker.name} contre ${target.name}.`
+1635:        ui.notifications.warn(`Sanctuary Ashara : attaque de ${attacker.name} bloquée.`);
+1637:        log("Sanctuary : attaque bloquée manuellement", {
+1647:      const result = await rollSanctuaryWisdomSave(attacker, dc, target.name);
+1651:          content: `<b>Sanctuary / Sanctuaire - Ashara</b><br>${attacker.name} réussit sa sauvegarde de Sagesse contre DD ${dc} avec <b>${result.total}</b>.<br>L'attaque contre ${target.name} peut continuer.`
+1654:        log("Sanctuary sauvegarde réussie", {
+1662:        tryAbortSanctuaryWorkflow(workflow);
+1665:          content: `<b>Sanctuary / Sanctuaire - Ashara</b><br>${attacker.name} rate sa sauvegarde de Sagesse contre DD ${dc} avec <b>${result.total}</b>.<br><b>L'attaque contre ${target.name} doit être annulée ou redirigée vers une autre cible.</b>`
+1668:        ui.notifications.warn(`Sanctuary Ashara : ${attacker.name} rate sa sauvegarde, l'attaque doit être annulée ou redirigée.`);
+1670:        log("Sanctuary sauvegarde ratée : attaque bloquée si possible", {
+1707:  function getHuntersMarkDurationSeconds(spellLevel) {
+1716:  function getHuntersMarkDurationLabel(spellLevel) {
+1725:  async function askHexAbility() {
+1728:        title: "Hex / Maléfice - Ashara",
+1733:              <select id="ashara-hex-ability">
+1746:            label: "Appliquer Hex",
+1747:            callback: html => resolve(String(html.find("#ashara-hex-ability").val() || "str"))
+1897:    if (spellKey === "hex" && targetActor) {
+1898:      await removeAsharaMarkFromTarget(targetActor, "hex", reason);
+1901:    if (spellKey === "huntersMark" && targetActor) {
+1902:      await removeAsharaMarkFromTarget(targetActor, "huntersMark", reason);
+1920:async function removeHex(actor, reason = "manual") {
+1921:    const data = actor.getFlag(MODULE_ID, "hex");
+1924:    await actor.unsetFlag(MODULE_ID, "hex");
+1931:      concentration?.spellKey === "hex" &&
+1934:      await clearAsharaConcentration(caster, `hex-removed-${reason}`);
+1937:    log("Hex retiré", {
+1945:  async function removeHuntersMark(actor, reason = "manual") {
+1946:    const data = actor.getFlag(MODULE_ID, "huntersMark");
+1949:    await actor.unsetFlag(MODULE_ID, "huntersMark");
+1956:      concentration?.spellKey === "huntersMark" &&
+1959:      await clearAsharaConcentration(caster, `hunters-mark-removed-${reason}`);
+1962:    log("Hunter's Mark retiré", {
+1970:  async function applyHex(targetActor, item) {
+1971:    const key = "hex";
+1974:    const ability = await askHexAbility();
+1982:    await targetActor.setFlag(MODULE_ID, "hex", {
+1992:      name: `Hex - Ashara (${getAbilityLabel(ability)})`,
+1996:        spell: "hex",
+2005:      spellKey: "hex",
+2006:      spellName: "Hex / Maléfice",
+2012:    log("Hex appliqué", {
+2021:  async function applyHuntersMark(targetActor, item, spellLevel = 1) {
+2022:    const key = "huntersMark";
+2024:    const durationSeconds = getHuntersMarkDurationSeconds(spellLevel);
+2029:    await targetActor.setFlag(MODULE_ID, "huntersMark", {
+2039:      name: `Hunter's Mark - Ashara Niv ${spellLevel}`,
+2043:        spell: "huntersMark",
+2052:      spellKey: "huntersMark",
+2053:      spellName: "Hunter's Mark / Marque du chasseur",
+2059:    log("Hunter's Mark appliqué", {
+2132:  function asharaHexHuntersMarkDamageBonus(workflow) {
+2149:        const hex = getAsharaMarkData(targetActor, "hex", attacker);
+2150:        if (hex) {
+2152:          flavorParts.push(`Hex sur ${targetActor.name}`);
+2155:        const huntersMark = getAsharaMarkData(targetActor, "huntersMark", attacker);
+2156:        if (huntersMark) {
+2158:          flavorParts.push(`Hunter's Mark sur ${targetActor.name}`);
+2167:      log("Hex/Hunter's Mark : bonus de dégâts ajouté", {
+2179:      error("Erreur Hex/Hunter's Mark DamageBonus :", err);
+2191:    if (spellKey === "aid") {
+2195:        ui.notifications.warn("Ashara Automations : cible au moins un token pour Aid.");
+2199:      const spellLevel = await askAidLevel();
+2203:        await applyAid(actor, spellLevel);
+2209:        content: `<b>Aid / Aide - Ashara</b><br>${targets.map(a => a.name).join(", ")} gagnent +${bonus} PV max et +${bonus} PV actuels pendant 8 heures.`
+2212:      ui.notifications.info(`Ashara Automations : Aid appliqué à ${targets.length} cible(s).`);
+2216:    if (spellKey === "longstrider") {
+2220:        ui.notifications.warn("Ashara Automations : aucune cible pour Longstrider.");
+2225:        await applyLongstrider(actor);
+2229:        content: `<b>Longstrider / Grandes foulées - Ashara</b><br>${targets.map(a => a.name).join(", ")} gagnent +10 ft de vitesse de marche pendant 1 heure.`
+2232:      ui.notifications.info(`Ashara Automations : Longstrider appliqué à ${targets.length} cible(s).`);
+2347:    if (spellKey === "armorOfAgathys") {
+2351:        ui.notifications.warn("Ashara Automations : aucune cible pour Armor of Agathys.");
+2355:      const spellLevel = await askSpellLevel("Armor of Agathys / Armure d’Agathys - Ashara", 1, 9);
+2361:        await applyArmorOfAgathys(actor, spellLevel);
+2365:        content: `<b>Armor of Agathys / Armure d’Agathys - Ashara</b><br>${targets.map(a => a.name).join(", ")} gagnent ${amount} PV temporaires pendant 1 heure.<br><i>Les dégâts de froid de riposte restent à gérer manuellement pour l’instant.</i>`
+2368:      ui.notifications.info(`Ashara Automations : Armor of Agathys appliqué à ${targets.length} cible(s).`);
+2372:    if (spellKey === "protectionEvilGood") {
+2376:        ui.notifications.warn("Ashara Automations : aucune cible pour Protection from Evil and Good.");
+2381:        await applyProtectionEvilGood(actor);
+2385:        content: `<b>Protection from Evil and Good / Protection contre le mal et le bien - Ashara</b><br>${targets.map(a => a.name).join(", ")} reçoivent le marqueur de protection pendant 10 minutes.`
+2388:      ui.notifications.info(`Ashara Automations : Protection from Evil and Good appliqué à ${targets.length} cible(s).`);
+2433:    if (spellKey === "hex") {
+2438:        ui.notifications.warn("Ashara Automations : cible une créature ennemie avec l’outil de ciblage pour Hex. Ne sélectionne pas seulement ton PJ.");
+2443:        await applyHex(actor, item);
+2447:        const ability = a.getFlag(MODULE_ID, "hex")?.ability;
+2452:        content: `<b>Hex / Maléfice - Ashara</b><br>${flagText} reçoit Hex pendant 1 heure.<br>Quand le lanceur touche la cible avec une attaque : <b>+1d6 dégâts nécrotiques</b>.<br>Rappel : la cible a désavantage aux tests de la caractéristique choisie.`
+2455:      ui.notifications.info(`Ashara Automations : Hex appliqué à ${targets.length} cible(s).`);
+2459:    if (spellKey === "huntersMark") {
+2464:        ui.notifications.warn("Ashara Automations : cible une créature ennemie avec l’outil de ciblage pour Hunter's Mark. Ne sélectionne pas seulement ton PJ.");
+2468:      const spellLevel = await askSpellLevel("Hunter's Mark / Marque du chasseur - Ashara", 1, 9);
+2472:        await applyHuntersMark(actor, item, spellLevel);
+2476:        content: `<b>Hunter's Mark / Marque du chasseur - Ashara</b><br>${targets.map(a => a.name).join(", ")} reçoit Hunter's Mark pendant ${getHuntersMarkDurationLabel(spellLevel)}.<br>Quand le lanceur touche la cible avec une attaque : <b>+1d6 dégâts de force</b>.`
+2479:      ui.notifications.info(`Ashara Automations : Hunter's Mark appliqué à ${targets.length} cible(s).`);
+2483:    if (spellKey === "sanctuary") {
+2484:      log("Sanctuary détecté via runAutomationForItem", {
+2493:        ui.notifications.warn("Ashara Automations : aucune cible pour Sanctuary.");
+2498:        await applySanctuary(actor, item);
+2502:        content: `<b>Sanctuary / Sanctuaire - Ashara</b><br>${targets.map(a => a.name).join(", ")} reçoivent Sanctuaire pendant 1 minute.`
+2505:      ui.notifications.info(`Ashara Automations : Sanctuary appliqué à ${targets.length} cible(s).`);
+2512:  function isLegacyAidEffect(effect) {
+2615:  async function handleHexHuntersMarkExtraDamage(workflow) {
+2621:      // Sans cette sécurité, nos dégâts Hunter's Mark / Hex déclenchent eux-mêmes Hunter's Mark / Hex en boucle.
+2625:        itemName.includes("Hunter's Mark / Marque du chasseur - Ashara") ||
+2626:        itemName.includes("Hex / Maléfice - Ashara") ||
+2627:        itemName.includes("Hex / Malefice - Ashara") ||
+2631:        log("Hex/Hunter's Mark : workflow de dégâts bonus ignoré pour éviter une boucle", {
+2647:        log("Hex/Hunter's Mark : aucun hit target détecté au RollComplete", {
+2666:        const hex = getAsharaMarkData(targetActor, "hex", attacker);
+2668:        if (hex) {
+2669:          const key = `${workflowId}-${targetKey}-hex`;
+2680:              label: "Hex / Maléfice"
+2687:        const huntersMark = getAsharaMarkData(targetActor, "huntersMark", attacker);
+2689:        if (huntersMark) {
+2690:          const key = `${workflowId}-${targetKey}-huntersMark`;
+2701:              label: "Hunter's Mark / Marque du chasseur"
+2710:        log("Hex/Hunter's Mark : dégâts supplémentaires traités au RollComplete", {
+2718:      error("Erreur Hex/Hunter's Mark RollComplete :", err);
+2725:  function getHexAbilityForActor(actor) {
+2728:    const flag = actor.getFlag?.(MODULE_ID, "hex");
+2731:    const effect = actor.effects?.find(e => e.getFlag(MODULE_ID, "key") === "hex");
+2774:  function installHexAbilityCheckDisadvantage() {
+2777:      log("Hex : Actor documentClass introuvable, désavantage non installé.");
+2781:    if (ActorClass.prototype.__asharaHexAbilityCheckDisadvantageInstalled) return;
+2782:    ActorClass.prototype.__asharaHexAbilityCheckDisadvantageInstalled = true;
+2789:        const hexAbility = getHexAbilityForActor(this);
+2792:        if (hexAbility && rolledAbility === hexAbility) {
+2796:            content: `<b>Hex / Maléfice - Ashara</b><br>${this.name} a désavantage à ce test de ${getAbilityLabel(hexAbility)}.`
+2799:          log("Hex : désavantage appliqué à un test de caractéristique", {
+2801:            ability: hexAbility
+2811:        const hexAbility = getHexAbilityForActor(this);
+2814:        if (hexAbility && skillAbility === hexAbility) {
+2823:            content: `<b>Hex / Maléfice - Ashara</b><br>${this.name} a désavantage au test de compétence <b>${skillLabel}</b>, car il utilise ${getAbilityLabel(hexAbility)}.`
+2826:          log("Hex : désavantage appliqué à un test de compétence", {
+2829:            ability: hexAbility
+2837:    log("Hex : désavantage automatique aux tests de caractéristique installé.");
+2848:      ["hex", "huntersMark"].includes(spellKey) &&
+2851:      log("Hex/Hunter's Mark : relance Midi-QOL ignorée pour éviter une mauvaise cible", {
+2877:    if (isLegacyAidEffect(effect)) {
+2878:      log("Effet Aid legacy bloqué :", effect.name || effect.label);
+2900:    if (key === "aid") await removeAid(actor, "effect-delete");
+2901:    if (key === "longstrider") await removeLongstrider(actor, "effect-delete");
+2907:    if (key === "armorOfAgathys") await removeArmorOfAgathys(actor, "effect-delete");
+2908:    if (key === "protectionEvilGood") await removeProtectionEvilGood(actor, "effect-delete");
+2911:    if (key === "hex") await removeHex(actor, "effect-delete");
+2912:    if (key === "huntersMark") await removeHuntersMark(actor, "effect-delete");
+2914:    if (key === "sanctuary") await removeSanctuary(actor, "effect-delete");
+2925:    if (key === "aid") await removeAid(actor, "effect-disabled");
+2926:    if (key === "longstrider") await removeLongstrider(actor, "effect-disabled");
+2932:    if (key === "armorOfAgathys") await removeArmorOfAgathys(actor, "effect-disabled");
+2933:    if (key === "protectionEvilGood") await removeProtectionEvilGood(actor, "effect-disabled");
+2936:    if (key === "hex") await removeHex(actor, "effect-disabled");
+2937:    if (key === "huntersMark") await removeHuntersMark(actor, "effect-disabled");
+2939:    if (key === "sanctuary") await removeSanctuary(actor, "effect-disabled");
+2976:  function asharaHasProtectionEvilGood(actor) {
+2979:    const flag = actor.getFlag(MODULE_ID, "protectionEvilGood");
+2982:    const effect = actor.effects?.find(e => e.getFlag(MODULE_ID, "key") === "protectionEvilGood");
+3030:  function asharaIsProtectionCreature(actor) {
+3105:    const protectedTargets = targets.filter(t => asharaHasProtectionEvilGood(t.actor));
+3108:      log("Protection Evil/Good ignorée : aucune cible protégée détectée", {
+3116:    const attackerIsValidType = asharaIsProtectionCreature(attacker);
+3119:      log("Protection Evil/Good ignorée : type attaquant non reconnu", {
+3128:      log("Protection Evil/Good ignorée : workflow pas reconnu comme attaque", {
+3153:      workflow.attackAdvAttribution.add("Protection from Evil and Good - Ashara");
+3156:    log("Protection Evil/Good : désavantage FORCÉ", {
+3164:      content: `<b>Protection from Evil and Good / Protection contre le mal et le bien - Ashara</b><br>${attacker.name} attaque ${protectedTargets.map(t => t.name).join(", ")} avec <b>désavantage</b>.`
+3171:  async function applySanctuaryToSelected() {
+3175:      ui.notifications.error("Ashara Automations : sélectionne le token qui doit recevoir Sanctuary.");
+3179:    await applySanctuary(actor, null);
+3182:      content: `<b>Sanctuary / Sanctuaire - Ashara</b><br>Sanctuary appliqué manuellement à ${actor.name}.`
+3185:    ui.notifications.info(`Ashara Automations : Sanctuary appliqué à ${actor.name}.`);
+3194:      applyAid,
+3195:      removeAid,
+3196:      applyLongstrider,
+3197:      removeLongstrider,
+3208:      applyArmorOfAgathys,
+3209:      removeArmorOfAgathys,
+3210:      applyProtectionEvilGood,
+3211:      applySanctuary,
+3212:      applySanctuaryToSelected,
+3213:      applyHex,
+3214:      removeHex,
+3215:      applyHuntersMark,
+3216:      removeHuntersMark,
+3217:      removeProtectionEvilGood,
+3264:        await handleArmorOfAgathysRetaliation(workflow);
+3265:        await handleHexHuntersMarkExtraDamage(workflow);
+3286:        error("Erreur Protection Evil/Good preAttackRoll :", err);
+3294:        error("Erreur Protection Evil/Good preItemRoll :", err);
+3302:        error("Erreur Protection Evil/Good preCheckHits :", err);
+3306:    log("Protection Evil/Good : hooks de désavantage activés.");
+3311:        const result = await sanctuaryReminder(workflow, "midi-qol.preAttackRoll");
+3315:        error("Erreur Sanctuary preAttackRoll :", err);
+3322:        const result = await sanctuaryReminder(workflow, "midi-qol.preItemRoll");
+3326:        error("Erreur Sanctuary preItemRoll :", err);
+3331:    log("Sanctuary : sauvegarde automatique activée.");
+3333:    log("Hex/Hunter's Mark : dégâts supplémentaires RollComplete activés.");
+3335:    installHexAbilityCheckDisadvantage();
+3340:        ActorClass.prototype.__asharaHexAbilityCheckDisadvantageInstalled = false;
+3342:      installHexAbilityCheckDisadvantage();
+3348:        ActorClass.prototype.__asharaHexAbilityCheckDisadvantageInstalled = false;
+3350:      installHexAbilityCheckDisadvantage();
