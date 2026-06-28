@@ -2552,6 +2552,123 @@
   }
 
 
+
+  function getHexAbilityForActor(actor) {
+    if (!actor) return null;
+
+    const flag = actor.getFlag?.(MODULE_ID, "hex");
+    if (!flag) return null;
+
+    const effect = actor.effects?.find(e => e.getFlag(MODULE_ID, "key") === "hex");
+    if (!effect) return null;
+    if (effect.disabled) return null;
+
+    const ability = String(flag.ability || "").toLowerCase();
+
+    if (!["str", "dex", "con", "int", "wis", "cha"].includes(ability)) return null;
+
+    return ability;
+  }
+
+  function forceDisadvantageOnRollOptions(options = {}) {
+    options.disadvantage = true;
+    options.advantage = false;
+
+    options.fastForward = options.fastForward ?? false;
+
+    if (options.configureDialogOptions) {
+      options.configureDialogOptions.disadvantage = true;
+      options.configureDialogOptions.advantage = false;
+    }
+
+    if (options.dialogOptions) {
+      options.dialogOptions.disadvantage = true;
+      options.dialogOptions.advantage = false;
+    }
+
+    return options;
+  }
+
+  function getSkillAbility(actor, skillId) {
+    const skill = actor?.system?.skills?.[skillId];
+    const ability =
+      skill?.ability ||
+      skill?.defaultAbility ||
+      skill?.mod?.ability ||
+      CONFIG?.DND5E?.skills?.[skillId]?.ability ||
+      CONFIG?.DND5E?.skills?.[skillId]?.defaultAbility ||
+      null;
+
+    return ability ? String(ability).toLowerCase() : null;
+  }
+
+  function installHexAbilityCheckDisadvantage() {
+    const ActorClass = CONFIG?.Actor?.documentClass;
+    if (!ActorClass?.prototype) {
+      log("Hex : Actor documentClass introuvable, désavantage non installé.");
+      return;
+    }
+
+    if (ActorClass.prototype.__asharaHexAbilityCheckDisadvantageInstalled) return;
+    ActorClass.prototype.__asharaHexAbilityCheckDisadvantageInstalled = true;
+
+    const originalRollAbilityTest = ActorClass.prototype.rollAbilityTest;
+    const originalRollSkill = ActorClass.prototype.rollSkill;
+
+    if (typeof originalRollAbilityTest === "function") {
+      ActorClass.prototype.rollAbilityTest = async function(abilityId, options = {}) {
+        const hexAbility = getHexAbilityForActor(this);
+        const rolledAbility = String(abilityId || "").toLowerCase();
+
+        if (hexAbility && rolledAbility === hexAbility) {
+          forceDisadvantageOnRollOptions(options);
+
+          ChatMessage.create({
+            content: `<b>Hex / Maléfice - Ashara</b><br>${this.name} a désavantage à ce test de ${getAbilityLabel(hexAbility)}.`
+          });
+
+          log("Hex : désavantage appliqué à un test de caractéristique", {
+            actor: this.name,
+            ability: hexAbility
+          });
+        }
+
+        return originalRollAbilityTest.call(this, abilityId, options);
+      };
+    }
+
+    if (typeof originalRollSkill === "function") {
+      ActorClass.prototype.rollSkill = async function(skillId, options = {}) {
+        const hexAbility = getHexAbilityForActor(this);
+        const skillAbility = getSkillAbility(this, skillId);
+
+        if (hexAbility && skillAbility === hexAbility) {
+          forceDisadvantageOnRollOptions(options);
+
+          const skillLabel =
+            CONFIG?.DND5E?.skills?.[skillId]?.label ||
+            CONFIG?.DND5E?.skills?.[skillId]?.name ||
+            skillId;
+
+          ChatMessage.create({
+            content: `<b>Hex / Maléfice - Ashara</b><br>${this.name} a désavantage au test de compétence <b>${skillLabel}</b>, car il utilise ${getAbilityLabel(hexAbility)}.`
+          });
+
+          log("Hex : désavantage appliqué à un test de compétence", {
+            actor: this.name,
+            skill: skillId,
+            ability: hexAbility
+          });
+        }
+
+        return originalRollSkill.call(this, skillId, options);
+      };
+    }
+
+    log("Hex : désavantage automatique aux tests de caractéristique installé.");
+  }
+
+
   async function tryRunAutomationFromHook(item, source = "unknown") {
     if (!item?.name) return false;
     if (!isControlledSpellName(item.name)) return false;
@@ -2888,7 +3005,7 @@
     refreshControlledItemUuids();
 
     window.ASHARA_AUTOMATIONS = {
-      version: "0.4.6",
+      version: "0.4.7",
       applyAid,
       removeAid,
       applyLongstrider,
@@ -3029,6 +3146,8 @@
     log("Sanctuary : sauvegarde automatique activée.");
 
     log("Hex/Hunter's Mark : dégâts supplémentaires RollComplete activés.");
+
+    installHexAbilityCheckDisadvantage();
 
 
 
