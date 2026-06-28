@@ -2350,6 +2350,183 @@
     return Date.now() - last < 2500;
   }
 
+
+  const asharaMarkDamageHandled = new Set();
+
+  function getAsharaWorkflowId(workflow) {
+    return workflow?.uuid || workflow?.id || workflow?._id || workflow?.itemCardId || `${Date.now()}-${Math.random()}`;
+  }
+
+  function getAsharaTargetToken(target) {
+    if (!target) return null;
+
+    if (target.object?.actor) return target.object;
+    if (target.token?.actor) return target.token;
+    if (target.document?.object?.actor) return target.document.object;
+    if (target.actor && target.center) return target;
+
+    const actor = target.actor || target.document?.actor;
+    if (!actor) return null;
+
+    return canvas.tokens?.placeables?.find(token => {
+      if (!token?.actor) return false;
+      if (token.actor === actor) return true;
+      if (token.actor.uuid && actor.uuid && token.actor.uuid === actor.uuid) return true;
+      if (token.actor.id && actor.id && token.actor.id === actor.id) return true;
+      return token.actor.name === actor.name;
+    }) || null;
+  }
+
+  async function applyAsharaBonusDamage({ workflow, target, damageFormula, damageType, label }) {
+    const attacker = workflow?.actor;
+    const attackerToken = workflow?.token || canvas.tokens?.controlled?.[0] || null;
+    const targetToken = getAsharaTargetToken(target);
+    const targetActor = target?.actor || target?.document?.actor || targetToken?.actor;
+
+    if (!attacker || !targetActor) return false;
+
+    let roll;
+
+    try {
+      roll = await new Roll(damageFormula).evaluate();
+    } catch (err) {
+      error(`${label} : erreur sur la formule de dégâts, fallback 1d6.`, {
+        damageFormula,
+        damageType,
+        err
+      });
+
+      roll = await new Roll("1d6").evaluate();
+    }
+
+    await roll.toMessage({
+      speaker: ChatMessage.getSpeaker({ actor: attacker }),
+      flavor: `<b>${label} - Ashara</b><br>${attacker.name} inflige <b>${roll.total}</b> dégâts de ${damageType} supplémentaires à ${targetActor.name}.`
+    });
+
+    try {
+      if (globalThis.MidiQOL?.DamageOnlyWorkflow && targetToken) {
+        new MidiQOL.DamageOnlyWorkflow(
+          attacker,
+          attackerToken,
+          roll.total,
+          damageType,
+          [targetToken],
+          roll,
+          {
+            flavor: `${label} - Ashara`,
+            itemCardId: workflow?.itemCardId
+          }
+        );
+
+        log(`${label} : dégâts appliqués via DamageOnlyWorkflow`, {
+          attacker: attacker.name,
+          target: targetActor.name,
+          total: roll.total,
+          damageType
+        });
+
+        return true;
+      }
+    } catch (err) {
+      error(`${label} : DamageOnlyWorkflow indisponible ou en erreur.`, err);
+    }
+
+    ChatMessage.create({
+      content: `<b>${label} - Ashara</b><br><b>À appliquer manuellement si Midi-QOL ne l'a pas fait :</b> ${roll.total} dégâts de ${damageType} à ${targetActor.name}.`
+    });
+
+    return true;
+  }
+
+  async function handleHexHuntersMarkExtraDamage(workflow) {
+    try {
+      if (!asharaIsAttackDamageWorkflow(workflow)) return false;
+
+      const attacker = workflow?.actor;
+      if (!attacker) return false;
+
+      const workflowId = getAsharaWorkflowId(workflow);
+      const targets = getAsharaDamageTargets(workflow);
+
+      if (!targets.length) {
+        log("Hex/Hunter's Mark : aucun hit target détecté au RollComplete", {
+          attacker: attacker.name,
+          item: workflow?.item?.name
+        });
+        return false;
+      }
+
+      let applied = false;
+
+      for (const target of targets) {
+        const targetActor = target?.actor || target?.document?.actor;
+        if (!targetActor) continue;
+
+        const targetKey =
+          targetActor.uuid ||
+          targetActor.id ||
+          targetActor.name ||
+          "target";
+
+        const hex = getAsharaMarkData(targetActor, "hex", attacker);
+
+        if (hex) {
+          const key = `${workflowId}-${targetKey}-hex`;
+
+          if (!asharaMarkDamageHandled.has(key)) {
+            asharaMarkDamageHandled.add(key);
+            setTimeout(() => asharaMarkDamageHandled.delete(key), 60000);
+
+            await applyAsharaBonusDamage({
+              workflow,
+              target,
+              damageFormula: "1d6[necrotic]",
+              damageType: "necrotic",
+              label: "Hex / Maléfice"
+            });
+
+            applied = true;
+          }
+        }
+
+        const huntersMark = getAsharaMarkData(targetActor, "huntersMark", attacker);
+
+        if (huntersMark) {
+          const key = `${workflowId}-${targetKey}-huntersMark`;
+
+          if (!asharaMarkDamageHandled.has(key)) {
+            asharaMarkDamageHandled.add(key);
+            setTimeout(() => asharaMarkDamageHandled.delete(key), 60000);
+
+            await applyAsharaBonusDamage({
+              workflow,
+              target,
+              damageFormula: "1d6[force]",
+              damageType: "force",
+              label: "Hunter's Mark / Marque du chasseur"
+            });
+
+            applied = true;
+          }
+        }
+      }
+
+      if (applied) {
+        log("Hex/Hunter's Mark : dégâts supplémentaires traités au RollComplete", {
+          attacker: attacker.name,
+          targets: targets.map(t => t.actor?.name || t.document?.actor?.name || t.name)
+        });
+      }
+
+      return applied;
+    } catch (err) {
+      error("Erreur Hex/Hunter's Mark RollComplete :", err);
+      return false;
+    }
+  }
+
+
   async function tryRunAutomationFromHook(item, source = "unknown") {
     if (!item?.name) return false;
     if (!isControlledSpellName(item.name)) return false;
@@ -2686,7 +2863,7 @@
     refreshControlledItemUuids();
 
     window.ASHARA_AUTOMATIONS = {
-      version: "0.4.3",
+      version: "0.4.4",
       applyAid,
       removeAid,
       applyLongstrider,
@@ -2758,6 +2935,7 @@
       try {
         await tryRunAutomationFromHook(item, "midi-qol.RollComplete");
         await handleArmorOfAgathysRetaliation(workflow);
+        await handleHexHuntersMarkExtraDamage(workflow);
       } catch (err) {
         error("Erreur hook midi-qol.RollComplete :", err);
       }
@@ -2825,11 +3003,7 @@
 
     log("Sanctuary : sauvegarde automatique activée.");
 
-    Hooks.on("midi-qol.DamageBonus", workflow => {
-      return asharaHexHuntersMarkDamageBonus(workflow);
-    });
-
-    log("Hex/Hunter's Mark : bonus de dégâts Midi-QOL activé.");
+    log("Hex/Hunter's Mark : dégâts supplémentaires RollComplete activés.");
 
 
 
